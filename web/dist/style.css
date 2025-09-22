@@ -1,0 +1,23 @@
+* {
+  margin: 0px;
+  box-sizing: border-box;
+}
+
+#game_div {
+  background-color: blue;
+
+  height: 100%;
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  image-rendering: pixelated;
+}
+
+#game_canvas {
+  background-color: green;
+}
+
+body {
+  background-color: blanchedalmond;
+}
