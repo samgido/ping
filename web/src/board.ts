@@ -7,9 +7,13 @@ export class Board {
   constructor(size: Vector) {
     this.size = size;
     this.barriers = [];
+
+    for (var i = 0; i < size.x; i++) {
+      for (var j = 0; j < size.y; j++) {
+      }
+    }
   }
 
-  // Assume p1, p2 in any order, i.e. not particularl p1.x <= p2.x and p1.y <= p2.y
   public addBarrierRect(p1: Vector, p2: Vector) {
     let [v1, v2] = this.orderVectors(p1, p2);
 

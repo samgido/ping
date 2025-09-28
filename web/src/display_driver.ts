@@ -24,9 +24,8 @@ export class DisplayDriver {
     this.context.fillStyle = 'blue';
     this.context.lineWidth = 2;
 
-    for (var i = 0; i < this.board.barriers.length; i++) {
-      let p = this.board.barriers[i].mul(TILE_SIZE);
-
+    for (const barrier of this.board.barriers) {
+      const p = barrier.mul(TILE_SIZE);
       this.context.strokeRect(p.x, p.y, TILE_SIZE, TILE_SIZE);
     }
   }
