@@ -11,7 +11,7 @@ export class DisplayDriver {
   first_selection: Vector | null = null;
 
   constructor(context: CanvasRenderingContext2D) {
-    this.board = new Board(new Vector(10, 10));
+    this.board = new Board(new Vector(100, 100));
     this.context = context;
   }
 
@@ -24,9 +24,12 @@ export class DisplayDriver {
     this.context.fillStyle = 'blue';
     this.context.lineWidth = 2;
 
-    for (const barrier of this.board.barriers) {
-      const p = barrier.mul(TILE_SIZE);
-      this.context.strokeRect(p.x, p.y, TILE_SIZE, TILE_SIZE);
+    for (var i = 0; i < this.board.size.x; i++) {
+      for (var j = 0; j < this.board.size.y; j++) {
+        if (this.board.grid[i][j]) {
+          this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        }
+      }
     }
   }
 

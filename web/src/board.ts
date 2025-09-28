@@ -2,14 +2,16 @@ import { Vector } from "./vector";
 
 export class Board {
   size: Vector
-  barriers: Vector[]
+  grid: boolean[][]
 
   constructor(size: Vector) {
     this.size = size;
-    this.barriers = [];
+    this.grid = [];
 
     for (var i = 0; i < size.x; i++) {
+      this.grid[i] = [];
       for (var j = 0; j < size.y; j++) {
+        this.grid[i][j] = false;
       }
     }
   }
@@ -18,18 +20,16 @@ export class Board {
     let [v1, v2] = this.orderVectors(p1, p2);
 
     for (var i = 0; i <= v2.x - v1.x; i++) {
-      if (!this.validX(i))
+      if (!this.validX(i + v1.x))
         continue;
 
       for (var j = 0; j <= v2.y - v1.y; j++) {
-        if (!this.validY(j))
+        if (!this.validY(j + v1.y))
           continue;
 
-        this.barriers = this.barriers.concat(new Vector(i + v1.x, j + v1.y));
+        this.grid[i + v1.x][j + v1.y] = true;
       }
     }
-
-    console.log(this.barriers);
   }
 
   private orderVectors(p1: Vector, p2: Vector): [Vector, Vector] {
@@ -46,10 +46,10 @@ export class Board {
   }
 
   private validX(n: number) {
-    return n >= 0 || n < this.size.x;
+    return n >= 0 && n < this.size.x;
   }
 
   private validY(n: number) {
-    return n >= 0 || n < this.size.y;
+    return n >= 0 && n < this.size.y;
   }
 }
