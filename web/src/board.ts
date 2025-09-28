@@ -32,6 +32,123 @@ export class Board {
     }
   }
 
+  public getBoardValueOrDefault(def: boolean, p: Vector) {
+    return this.validPoint(p) ? this.grid[p.x][p.y] : def;
+  }
+
+  public getShortestPath(player: Vector, finish: Vector): Vector[] {
+    console.log("Starting shortest path");
+    type Node = {
+      p: Vector,
+      f: number
+      parent: Vector
+    };
+
+    var openList: Map<Vector, Node> = new Map();
+    openList.set(player, {
+      p: player,
+      f: 0,
+      parent: player,
+    });
+
+    var closedList: Map<Vector, Node> = new Map(); // Fuckass definition, cleanup the type
+
+    while (openList.size > 0) {
+      var lowest_f: Node | null = null;
+      for (var [k, v] of openList.entries()) { // Should be done in a minheap
+        if (lowest_f == null)
+          lowest_f = v;
+
+        if (v.f < lowest_f.f) {
+          lowest_f = v;
+        }
+      }
+      if (lowest_f == null) {
+        console.log("Something went wrong in A*");
+        break;
+      }
+
+      openList.delete(lowest_f.p);
+
+      closedList.set(lowest_f.p, lowest_f);
+
+      if (lowest_f.p.x == finish.x && lowest_f.p.y == finish.y)
+        break;
+
+      const neighbor_ps = [
+        new Vector(lowest_f.p.x - 1, lowest_f.p.y),
+        new Vector(lowest_f.p.x + 1, lowest_f.p.y),
+        new Vector(lowest_f.p.x, lowest_f.p.y - 1),
+        new Vector(lowest_f.p.x, lowest_f.p.y + 1),
+      ]
+
+      for (var neighbor of neighbor_ps) {
+        // if (neighbor.x < 0 || neighbor.x >= this.size.x || neighbor.y < 0 || neighbor.y >= this.size.y)
+        //   continue;
+
+        // if (this.grid[neighbor.x][neighbor.y])
+        //   continue;
+
+        if (closedList.has(neighbor))
+          continue;
+
+        const cost = Math.sqrt(Math.pow(finish.x - neighbor.x, 2) + Math.pow(finish.y - neighbor.y, 2));
+        if (openList.has(neighbor)) {
+          const existingNode = openList.get(neighbor);
+          if (existingNode != undefined) {
+            existingNode.f = Math.min(cost, existingNode.f);
+            openList.set(neighbor, existingNode);
+          }
+        } else
+          openList.set(neighbor, {
+            p: neighbor,
+            f: cost,
+            parent: lowest_f.p,
+          });
+
+        console.log("Considering " + neighbor);
+      }
+    }
+
+    // Construct path
+    console.log("Number of nodes in closed list: " + closedList.size);
+
+    var path: Vector[] = [];
+
+    return path;
+  }
+
+  public doesPathExist(player: Vector, finish: Vector): boolean {
+    const visited = new Set<Vector>();
+
+    const dfs = (node: Vector): boolean => {
+      if (node.x == finish.x && node.y == finish.y)
+        return true;
+
+      if (visited.has(node))
+        return false;
+
+      visited.add(node);
+      const neighbors = [
+        new Vector(node.x + 1, node.y),
+        new Vector(node.x - 1, node.y),
+        new Vector(node.x, node.y + 1),
+        new Vector(node.x, node.y - 1),
+      ]
+
+      for (const neighbor of neighbors) {
+        if (!this.getBoardValueOrDefault(true, neighbor)) {
+          if (dfs(neighbor))
+            return true;
+        }
+      }
+
+      return false;
+    };
+
+    return dfs(player);
+  }
+
   private orderVectors(p1: Vector, p2: Vector): [Vector, Vector] {
     let x1 = Math.min(p1.x, p2.x);
     let y1 = Math.min(p1.y, p2.y);
@@ -43,6 +160,10 @@ export class Board {
       new Vector(x1, y1),
       new Vector(x2, y2)
     ];
+  }
+
+  private validPoint(p: Vector) {
+    return this.validX(p.x) && this.validY(p.y);
   }
 
   private validX(n: number) {

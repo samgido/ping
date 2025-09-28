@@ -22,6 +22,16 @@ class Game {
     canvas.addEventListener("pointerdown", (event) => {
       this.display_driver.handlePointerDown(new Vector(event.offsetX, event.offsetY));
     });
+
+    document.addEventListener("keydown", (event) => {
+      switch (event.key) {
+        case "f":
+          this.display_driver.handleFindShortestPath();
+          break;
+        case "e":
+          console.log(this.display_driver.handlePathExists());
+      }
+    });
   }
 
   private draw(_: number) {
