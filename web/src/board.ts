@@ -3,9 +3,11 @@ import { Vector } from "./vector";
 export class Board {
   size: Vector
   grid: boolean[][]
+  shortest_path: Vector[]
 
   constructor(size: Vector) {
     this.size = size;
+    this.shortest_path = [];
     this.grid = [];
 
     for (var i = 0; i < size.x; i++) {
@@ -41,17 +43,17 @@ export class Board {
     type Node = {
       p: Vector,
       f: number
-      parent: Vector
+      parent: Vector | null
     };
 
-    var openList: Map<Vector, Node> = new Map();
-    openList.set(player, {
+    var openList: Map<string, Node> = new Map();
+    openList.set(player.toKey(), {
       p: player,
       f: 0,
-      parent: player,
+      parent: null,
     });
 
-    var closedList: Map<Vector, Node> = new Map(); // Fuckass definition, cleanup the type
+    var closedList: Map<string, Node> = new Map(); // Fuckass definition, cleanup the type
 
     while (openList.size > 0) {
       var lowest_f: Node | null = null;
@@ -68,9 +70,9 @@ export class Board {
         break;
       }
 
-      openList.delete(lowest_f.p);
+      openList.delete(lowest_f.p.toKey());
 
-      closedList.set(lowest_f.p, lowest_f);
+      closedList.set(lowest_f.p.toKey(), lowest_f);
 
       if (lowest_f.p.x == finish.x && lowest_f.p.y == finish.y)
         break;
@@ -80,7 +82,7 @@ export class Board {
         new Vector(lowest_f.p.x + 1, lowest_f.p.y),
         new Vector(lowest_f.p.x, lowest_f.p.y - 1),
         new Vector(lowest_f.p.x, lowest_f.p.y + 1),
-      ]
+      ].filter((v: Vector, _i, _a) => !this.getBoardValueOrDefault(true, v));
 
       for (var neighbor of neighbor_ps) {
         // if (neighbor.x < 0 || neighbor.x >= this.size.x || neighbor.y < 0 || neighbor.y >= this.size.y)
@@ -89,31 +91,41 @@ export class Board {
         // if (this.grid[neighbor.x][neighbor.y])
         //   continue;
 
-        if (closedList.has(neighbor))
+        if (closedList.has(neighbor.toKey()))
           continue;
 
-        const cost = Math.sqrt(Math.pow(finish.x - neighbor.x, 2) + Math.pow(finish.y - neighbor.y, 2));
-        if (openList.has(neighbor)) {
-          const existingNode = openList.get(neighbor);
+        const cost = lowest_f.f + Math.sqrt(Math.pow(finish.x - neighbor.x, 2) + Math.pow(finish.y - neighbor.y, 2));
+        if (openList.has(neighbor.toKey())) {
+          const existingNode = openList.get(neighbor.toKey());
           if (existingNode != undefined) {
             existingNode.f = Math.min(cost, existingNode.f);
-            openList.set(neighbor, existingNode);
+            openList.set(neighbor.toKey(), existingNode);
           }
         } else
-          openList.set(neighbor, {
+          openList.set(neighbor.toKey(), {
             p: neighbor,
             f: cost,
             parent: lowest_f.p,
           });
-
-        console.log("Considering " + neighbor);
       }
     }
 
     // Construct path
     console.log("Number of nodes in closed list: " + closedList.size);
+    console.log(closedList);
 
     var path: Vector[] = [];
+
+    var current_node: Node | null | undefined = closedList.get(finish.toKey()); // what the fuck
+
+    if (current_node == undefined)
+      return [];
+
+    while (current_node != null) {
+      path = path.concat(current_node.p);
+      console.log(current_node.p.toKey());
+      current_node = current_node.parent == null ? null : closedList.get(current_node.parent.toKey());
+    }
 
     return path;
   }

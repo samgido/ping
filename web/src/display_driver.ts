@@ -14,11 +14,11 @@ export class DisplayDriver {
   first_selection: Vector | null = null;
 
   constructor(context: CanvasRenderingContext2D) {
-    this.board = new Board(new Vector(10, 10));
+    this.board = new Board(new Vector(100, 100));
     this.context = context;
 
-    this.player = new Vector(10, Math.floor(this.board.size.y / 2));
-    this.finish = new Vector(this.player.x, this.player.y + 10);
+    this.player = new Vector(5, 15);
+    this.finish = new Vector(10, 15);
   }
 
   public drawBoard() {
@@ -62,7 +62,10 @@ export class DisplayDriver {
     this.context.fillRect(this.finish.x * TILE_SIZE, this.finish.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
     // Shortest path
-    // this.board.getShortestPath(this.player, this.finish);
+    for (const p of this.board.shortest_path) {
+      this.context.fillStyle = 'grey';
+      this.context.fillRect(p.x * TILE_SIZE, p.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    }
   }
 
   public handlePathExists() {
@@ -85,6 +88,8 @@ export class DisplayDriver {
       this.board.addBarrierRect(this.first_selection, tile);
 
       this.first_selection = null;
+
+      this.board.shortest_path = this.board.getShortestPath(this.player, this.finish);
     }
 
     console.log('Tile: (' + i_tile + ',' + j_tile + ')');
