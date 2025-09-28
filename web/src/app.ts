@@ -1,28 +1,39 @@
+import { DisplayDriver } from "./display_driver";
+import { Vector } from "./vector";
+
 class Game {
-  x: number;
-  context: CanvasRenderingContext2D;
+  display_driver: DisplayDriver
 
   constructor(context: CanvasRenderingContext2D) {
-    this.x = 0;
-    this.context = context;
+    const canvas = context.canvas;
+    this.initEventListeners(canvas);
+
+    this.display_driver = new DisplayDriver(context);
+
+    window.addEventListener("resize", this.resize);
+    this.resize();
   }
 
   public run() {
     this.draw(0);
   }
 
-  private draw(time: number) {
-    this.context.fillStyle = "green";
-    this.context.fillRect(0, 0, this.context.canvas.width, this.context.canvas.height);
+  private initEventListeners(canvas: HTMLCanvasElement) {
+    canvas.addEventListener("pointerdown", (event) => {
+      this.display_driver.handlePointerDown(new Vector(event.offsetX, event.offsetY));
+    });
+  }
 
-    this.context.fillStyle = "black";
-    this.context.fillRect(this.x, 0, 10, 10);
-
-    this.x += 1;
+  private draw(_: number) {
+    this.display_driver.drawBoard();
 
     requestAnimationFrame((new_time) => {
       this.draw(new_time);
     })
+  }
+
+  private resize() {
+    this.display_driver.resize();
   }
 }
 
