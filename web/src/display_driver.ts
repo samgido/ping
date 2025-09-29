@@ -1,7 +1,7 @@
 import { Board } from "./board";
 import { Vector } from "./vector";
 
-const TILE_SIZE = 10; // pixels ig
+const TILE_SIZE = 50; // pixels ig
 
 export class DisplayDriver {
   context: CanvasRenderingContext2D
@@ -49,6 +49,9 @@ export class DisplayDriver {
 
           if (!getBoardValueOrFalse(new Vector(i, j + 1)))
             this.context.strokeRect(i * TILE_SIZE, (j + 1) * TILE_SIZE, TILE_SIZE, c);
+        } else {
+          this.context.strokeStyle = "gray";
+          this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         }
       }
     }

@@ -39,7 +39,6 @@ export class Board {
   }
 
   public getShortestPath(player: Vector, finish: Vector): Vector[] {
-    console.log("Starting shortest path");
     type Node = {
       p: Vector,
       f: number
@@ -85,12 +84,6 @@ export class Board {
       ].filter((v: Vector, _i, _a) => !this.getBoardValueOrDefault(true, v));
 
       for (var neighbor of neighbor_ps) {
-        // if (neighbor.x < 0 || neighbor.x >= this.size.x || neighbor.y < 0 || neighbor.y >= this.size.y)
-        //   continue;
-
-        // if (this.grid[neighbor.x][neighbor.y])
-        //   continue;
-
         if (closedList.has(neighbor.toKey()))
           continue;
 
@@ -99,6 +92,7 @@ export class Board {
           const existingNode = openList.get(neighbor.toKey());
           if (existingNode != undefined) {
             existingNode.f = Math.min(cost, existingNode.f);
+            existingNode.parent = lowest_f.p;
             openList.set(neighbor.toKey(), existingNode);
           }
         } else
@@ -111,9 +105,6 @@ export class Board {
     }
 
     // Construct path
-    console.log("Number of nodes in closed list: " + closedList.size);
-    console.log(closedList);
-
     var path: Vector[] = [];
 
     var current_node: Node | null | undefined = closedList.get(finish.toKey()); // what the fuck
@@ -123,7 +114,6 @@ export class Board {
 
     while (current_node != null) {
       path = path.concat(current_node.p);
-      console.log(current_node.p.toKey());
       current_node = current_node.parent == null ? null : closedList.get(current_node.parent.toKey());
     }
 
