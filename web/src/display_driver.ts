@@ -1,7 +1,7 @@
 import { Board } from "./board";
 import { Vector } from "./vector";
 
-const TILE_SIZE = 50; // pixels ig
+const TILE_SIZE = 25; // pixels ig
 
 export class DisplayDriver {
   context: CanvasRenderingContext2D
@@ -88,11 +88,24 @@ export class DisplayDriver {
     if (this.first_selection == null) {
       this.first_selection = tile;
     } else {
+      var grid: boolean[][] = [];
+      for (var i = 0; i < this.board.grid.length; i++) {
+        grid[i] = [];
+        for (var j = 0; j < this.board.grid[i].length; j++) {
+          grid[i][j] = this.board.grid[i][j];
+        }
+      }
       this.board.addBarrierRect(this.first_selection, tile);
+
+      const shortest_path = this.board.getShortestPath(this.player, this.finish);
 
       this.first_selection = null;
 
-      this.board.shortest_path = this.board.getShortestPath(this.player, this.finish);
+      if (shortest_path.length == 0) {
+        console.log("Illegal barrier placed");
+        this.board.grid = grid;
+      } else
+        this.board.shortest_path = shortest_path;
     }
 
     console.log('Tile: (' + i_tile + ',' + j_tile + ') for Mouse: (' + p.x + ',' + p.y + ')');

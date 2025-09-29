@@ -35,6 +35,23 @@ export class Board {
     }
   }
 
+  public modifyBarrierRect(p1: Vector, p2: Vector, f: (v: boolean) => boolean) {
+    let [v1, v2] = this.orderVectors(p1, p2);
+
+    for (var i = 0; i <= v2.x - v1.x; i++) {
+      if (!this.validX(i + v1.x))
+        continue;
+
+      for (var j = 0; j <= v2.y - v1.y; j++) {
+        if (!this.validY(j + v1.y))
+          continue;
+
+        this.grid[i + v1.x][j + v1.y] = f(this.grid[i + v1.x][j + v1.y]);
+        console.log('Setting (' + i + v1.x + ',' + j + v1.y + ')');
+      }
+    }
+  }
+
   public getBoardValueOrDefault(def: boolean, p: Vector) {
     return this.validPoint(p) ? this.grid[p.x][p.y] : def;
   }
