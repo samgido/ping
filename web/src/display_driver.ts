@@ -95,7 +95,7 @@ export class DisplayDriver {
       this.board.shortest_path = this.board.getShortestPath(this.player, this.finish);
     }
 
-    console.log('Tile: (' + i_tile + ',' + j_tile + ')');
+    console.log('Tile: (' + i_tile + ',' + j_tile + ') for Mouse: (' + p.x + ',' + p.y + ')');
   }
 
   public resize() {

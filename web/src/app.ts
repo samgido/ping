@@ -6,9 +6,9 @@ class Game {
 
   constructor(context: CanvasRenderingContext2D) {
     const canvas = context.canvas;
-    this.initEventListeners(canvas);
-
     this.display_driver = new DisplayDriver(context);
+
+    this.initEventListeners(canvas);
 
     window.addEventListener("resize", () => {
       this.resize();

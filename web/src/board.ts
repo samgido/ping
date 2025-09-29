@@ -30,6 +30,7 @@ export class Board {
           continue;
 
         this.grid[i + v1.x][j + v1.y] = true;
+        console.log('Setting (' + i + v1.x + ',' + j + v1.y + ')');
       }
     }
   }
