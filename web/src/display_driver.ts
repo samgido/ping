@@ -103,5 +103,7 @@ export class DisplayDriver {
 
     this.context.canvas.width = canvas_size.x;
     this.context.canvas.height = canvas_size.y;
+
+    this.context.scale(pixelRatio, pixelRatio);
   }
 }
