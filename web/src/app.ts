@@ -10,7 +10,9 @@ class Game {
 
     this.display_driver = new DisplayDriver(context);
 
-    window.addEventListener("resize", this.resize);
+    window.addEventListener("resize", () => {
+      this.resize();
+    });
     this.resize();
   }
 
