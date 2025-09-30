@@ -53,6 +53,17 @@ export class MinHeap<T, K> {
     return true;
   }
 
+  public get(k: K): T | undefined {
+    const i = this.index_map.get(k);
+    if (i == undefined)
+      return undefined;
+
+    if (i < 0 || i >= this.size())
+      return undefined;
+
+    return this.heap[i];
+  }
+
   public size(): number { return this.heap.length; }
 
   public isEmpty(): boolean {
@@ -117,7 +128,7 @@ export class MinHeap<T, K> {
 
     var i = 0;
 
-    while (i < 100) {
+    while (true) {
       const left_child_index = this.getLeftChildIndex(current_index);
       const right_child_index = this.getRightChildIndex(current_index);
       let smallest_index = current_index;
@@ -130,7 +141,7 @@ export class MinHeap<T, K> {
         smallest_index = right_child_index;
       }
 
-      if (current_index = smallest_index) {
+      if (current_index == smallest_index) {
         break;
       }
 
