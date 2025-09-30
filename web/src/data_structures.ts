@@ -62,8 +62,9 @@ export class MinHeap<T, K> {
   public insert(e: T) {
     const key = this.getKey(e);
 
-    if (key != undefined) {
+    if (this.index_map.get(key) != undefined) {
       console.log("Tried to insert an element that already exists");
+      console.log("Key attempted: " + key);
       return;
     }
 
@@ -73,14 +74,8 @@ export class MinHeap<T, K> {
     this.bubbleUp(new_index);
   }
 
-  public modify(i: number, v: T): boolean {
-    if (i >= this.size())
-      return false;
-
-    this.heap[i] = v;
-    this.bubbleDown(0);
-
-    return true;
+  public logHeap() {
+    console.log(this.heap);
   }
 
   private getParentIndex(i: number): number {
@@ -120,7 +115,9 @@ export class MinHeap<T, K> {
     let current_index = i;
     let last_index = this.size() - 1;
 
-    while (true) {
+    var i = 0;
+
+    while (i < 100) {
       const left_child_index = this.getLeftChildIndex(current_index);
       const right_child_index = this.getRightChildIndex(current_index);
       let smallest_index = current_index;
@@ -139,6 +136,8 @@ export class MinHeap<T, K> {
 
       this.swap(current_index, smallest_index);
       current_index = smallest_index;
+
+      i += 1;
     }
   }
 }
