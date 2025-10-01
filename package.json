@@ -1,0 +1,45 @@
+{
+  "name": "ping-client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "dev": "esbuild ./web/src/app.ts --bundle --platform=node --outfile=./web/dist/app.js --watch --servedir=./web/dist --serve=8000",
+    "build": "esbuild ./web/src/app.ts --bundle --outfile=./web/dist/app.js --minify --platform=node",
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "Samuel Gido",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.6.0",
+    "esbuild": "0.25.10",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "roots": [
+      "./web/__test__"
+    ],
+    "moduleDirectories": [
+      "./node_modules",
+      "./web/src"
+    ],
+    "testMatch": [
+      "**/?(*.)+(spec|test).[tj]s?(x)"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx)$": "ts-jest"
+    },
+    "moduleFileExtensions": [
+      "ts",
+      "js"
+    ]
+  }
+}

@@ -6,9 +6,9 @@ class Game {
 
   constructor(context: CanvasRenderingContext2D) {
     const canvas = context.canvas;
-    this.initEventListeners(canvas);
-
     this.display_driver = new DisplayDriver(context);
+
+    this.initEventListeners(canvas);
 
     window.addEventListener("resize", () => {
       this.resize();
@@ -30,8 +30,6 @@ class Game {
         case "f":
           this.display_driver.handleFindShortestPath();
           break;
-        case "e":
-          console.log(this.display_driver.handlePathExists());
       }
     });
   }

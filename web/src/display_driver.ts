@@ -1,7 +1,7 @@
 import { Board } from "./board";
 import { Vector } from "./vector";
 
-const TILE_SIZE = 10; // pixels ig
+const TILE_SIZE = 25; // pixels ig
 
 export class DisplayDriver {
   context: CanvasRenderingContext2D
@@ -14,11 +14,11 @@ export class DisplayDriver {
   first_selection: Vector | null = null;
 
   constructor(context: CanvasRenderingContext2D) {
-    this.board = new Board(new Vector(10, 10));
+    this.board = new Board(new Vector(100, 100));
     this.context = context;
 
-    this.player = new Vector(10, Math.floor(this.board.size.y / 2));
-    this.finish = new Vector(this.player.x, this.player.y + 10);
+    this.player = new Vector(5, 15);
+    this.finish = new Vector(10, 15);
   }
 
   public drawBoard() {
@@ -49,6 +49,9 @@ export class DisplayDriver {
 
           if (!getBoardValueOrFalse(new Vector(i, j + 1)))
             this.context.strokeRect(i * TILE_SIZE, (j + 1) * TILE_SIZE, TILE_SIZE, c);
+        } else {
+          this.context.strokeStyle = "gray";
+          this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         }
       }
     }
@@ -62,11 +65,10 @@ export class DisplayDriver {
     this.context.fillRect(this.finish.x * TILE_SIZE, this.finish.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
     // Shortest path
-    // this.board.getShortestPath(this.player, this.finish);
-  }
-
-  public handlePathExists() {
-    this.board.doesPathExist(this.player, this.finish);
+    for (const p of this.board.shortest_path) {
+      this.context.fillStyle = 'grey';
+      this.context.fillRect(p.x * TILE_SIZE, p.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    }
   }
 
   public handleFindShortestPath() {
@@ -79,15 +81,22 @@ export class DisplayDriver {
 
     let tile = new Vector(i_tile, j_tile);
 
-    if (this.first_selection == null) {
-      this.first_selection = tile;
-    } else {
+    if (this.first_selection != null) {
+      var grid: boolean[][] = [];
+      grid = structuredClone(this.board.grid);
+
       this.board.addBarrierRect(this.first_selection, tile);
 
       this.first_selection = null;
-    }
 
-    console.log('Tile: (' + i_tile + ',' + j_tile + ')');
+      const shortest_path = this.board.getShortestPath(this.player, this.finish);
+
+      if (shortest_path.length == 0) {
+        this.board.grid = grid;
+      } else
+        this.board.shortest_path = shortest_path;
+    } else
+      this.first_selection = tile;
   }
 
   public resize() {
