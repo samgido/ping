@@ -30,8 +30,6 @@ class Game {
         case "f":
           this.display_driver.handleFindShortestPath();
           break;
-        case "e":
-          console.log(this.display_driver.handlePathExists());
       }
     });
   }
