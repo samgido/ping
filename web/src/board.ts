@@ -2,14 +2,12 @@ import { Vector } from "./vector";
 import { MinHeap } from "./data_structures";
 
 export class Board {
-  size: Vector
-  grid: boolean[][]
-  shortest_path: Vector[]
+  size: Vector;
+  grid: boolean[][] = [];
+  shortest_path: Vector[] = [];
 
   constructor(size: Vector) {
     this.size = size;
-    this.shortest_path = [];
-    this.grid = [];
 
     for (var i = 0; i < size.x; i++) {
       this.grid[i] = [];
@@ -48,7 +46,6 @@ export class Board {
           continue;
 
         this.grid[i + v1.x][j + v1.y] = f(this.grid[i + v1.x][j + v1.y]);
-        console.log('Setting (' + i + v1.x + ',' + j + v1.y + ')');
       }
     }
   }
@@ -71,11 +68,11 @@ export class Board {
       return Math.sqrt(a + b);
     }
 
-    const openList_h: MinHeap<Node, string> = new MinHeap(
+    const openList: MinHeap<Node, string> = new MinHeap(
       (a, b) => a.f - b.f,
       (v) => v.p.toKey(),
     );
-    openList_h.insert({
+    openList.insert({
       p: player,
       f: 0,
       parent: null,
@@ -83,43 +80,40 @@ export class Board {
 
     const closedList: Map<string, Node> = new Map();
 
-    while (openList_h.size() > 0) {
-      const lowest_f = openList_h.extractMin();
-      if (lowest_f == undefined) {
-        console.log("Something went wrong in A*");
+    while (openList.size() > 0) {
+      const current_node = openList.extractMin(); // Get node in openlist with lowest f
+
+      if (current_node == undefined) {
+        console.log("openList empty in A* while loop");
         break;
       }
 
-      closedList.set(lowest_f.p.toKey(), lowest_f);
+      closedList.set(current_node.p.toKey(), current_node);
 
-      if (lowest_f.p.equals(finish))
+      if (current_node.p.equals(finish))
         break;
 
-      const neighbors = [
-        new Vector(lowest_f.p.x - 1, lowest_f.p.y),
-        new Vector(lowest_f.p.x + 1, lowest_f.p.y),
-        new Vector(lowest_f.p.x, lowest_f.p.y - 1),
-        new Vector(lowest_f.p.x, lowest_f.p.y + 1),
-      ].filter((v) => !this.getBoardValueOrDefault(true, v)); // Do this to all filters, no need for other args
+      const neighbors = this.getNeighbors(current_node.p)
+        .filter((v) => !this.getBoardValueOrDefault(true, v));
 
       for (var neighbor of neighbors) {
         if (closedList.has(neighbor.toKey()))
           continue;
 
-        const cost = lowest_f.f + distToFinish(neighbor);
+        const cost = current_node.f + distToFinish(neighbor);
 
-        const existingNode = openList_h.get(neighbor.toKey());
+        const existingNode = openList.get(neighbor.toKey());
         if (existingNode != null) {
-          openList_h.update(existingNode.p.toKey(), {
+          openList.update(existingNode.p.toKey(), {
             p: neighbor,
             f: Math.min(cost, existingNode.f),
-            parent: lowest_f.p
+            parent: current_node.p
           });
         } else
-          openList_h.insert({
+          openList.insert({
             p: neighbor,
             f: cost,
-            parent: lowest_f.p
+            parent: current_node.p
           });
       }
     }
@@ -137,6 +131,15 @@ export class Board {
     }
 
     return path;
+  }
+
+  private getNeighbors(p: Vector): Vector[] {
+    return [
+      new Vector(p.x + 1, p.y),
+      new Vector(p.x - 1, p.y),
+      new Vector(p.x, p.y + 1),
+      new Vector(p.x, p.y - 1),
+    ];
   }
 
   private orderVectors(p1: Vector, p2: Vector): [Vector, Vector] {
