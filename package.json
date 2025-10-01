@@ -4,8 +4,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "dev": "esbuild ./src/app.ts --bundle --platform=node --outfile=./dist/app.js --watch --servedir=./dist --serve=8000",
-    "build": "esbuild ./src/app.ts --bundle --outfile=./dist/app.js --minify --platform=node",
+    "dev": "esbuild ./web/src/app.ts --bundle --platform=node --outfile=./web/dist/app.js --watch --servedir=./web/dist --serve=8000",
+    "build": "esbuild ./web/src/app.ts --bundle --outfile=./web/dist/app.js --minify --platform=node",
     "test": "jest"
   },
   "keywords": [],

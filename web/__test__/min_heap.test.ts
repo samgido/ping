@@ -38,10 +38,10 @@ describe('MinHeap tests', () => {
     h.insert(c + 1);
     h.insert(c + 2);
 
-    h.logHeap();
     h.update(numberGetKey(c + 2), 3);
-    h.logHeap();
-
     expect(h.extractMin()).toBe(3);
+
+    h.update(numberGetKey(5), 10);
+    expect(h.extractMin()).toBe(6);
   });
 });
