@@ -13,6 +13,18 @@ export class MinHeap<T, K> {
     this.getKey = getKey;
   }
 
+  public size(): number { 
+    return this.heap.length; 
+  }
+
+  public logHeap() {
+    console.log(this.heap);
+  }
+
+  public isEmpty(): boolean {
+    return this.heap.length == 0;
+  }
+
   public extractMin(): T | undefined {
     if (this.isEmpty()) {
       return undefined;
@@ -64,12 +76,6 @@ export class MinHeap<T, K> {
     return this.heap[i];
   }
 
-  public size(): number { return this.heap.length; }
-
-  public isEmpty(): boolean {
-    return this.heap.length == 0;
-  }
-
   public insert(e: T) {
     const key = this.getKey(e);
 
@@ -83,10 +89,6 @@ export class MinHeap<T, K> {
     const new_index = this.size() - 1;
     this.index_map.set(key, new_index);
     this.bubbleUp(new_index);
-  }
-
-  public logHeap() {
-    console.log(this.heap);
   }
 
   private getParentIndex(i: number): number {

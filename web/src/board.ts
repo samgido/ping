@@ -42,10 +42,10 @@ export class Board {
   public modifyBarrierRect(p1: Vector, p2: Vector, f: (v: boolean) => boolean) {
     let [v1, v2] = this.orderVectors(p1, p2);
 
-    const diff = v2.subtractVector(v1)
+    const area = v2.subtractVector(v1)
       .addScalar(1); // Add scalar for inclusivity
 
-    for (const [i, j] of orderedPairs(diff)) {
+    for (const [i, j] of orderedPairs(area)) {
       const [k, l] = [i + v1.x, j + v1.y];
 
       if (!this.validPoint(new Vector(k, l)))
@@ -56,12 +56,14 @@ export class Board {
   }
 
   public getShortestPath(player: Vector, finish: Vector): Vector[] {
+    // How nodes are stored in the open/closed lists
     type Node = {
       p: Vector,
       f: number
       parent: Vector | null
     };
 
+    // Helper function
     const dist_to_finish = (v1: Vector) => {
       const a = Math.pow(finish.x - v1.x, 2);
       const b = Math.pow(finish.y - v1.y, 2);
