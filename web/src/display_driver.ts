@@ -1,7 +1,8 @@
-import { Board } from "./board";
+import { Board, Direction } from "./board";
+import { orderedPairs } from "./util";
 import { Vector } from "./vector";
 
-const TILE_SIZE = 25; // pixels ig
+const TILE_SIZE = 25; // Pixels
 
 export class DisplayDriver {
   context: CanvasRenderingContext2D
@@ -21,71 +22,36 @@ export class DisplayDriver {
     this.finish = new Vector(10, 15);
   }
 
-  public drawBoard() {
-    // Clear screen
-    this.context.fillStyle = 'green';
-    this.context.fillRect(0, 0, this.context.canvas.width, this.context.canvas.height);
-
-    // Draw barriers
-    this.context.lineWidth = 2;
-
-    const getBoardValueOrFalse = (p: Vector) => this.board.getBoardValueOrDefault(false, p);
-    for (var i = 0; i < this.board.size.x; i++) {
-      for (var j = 0; j < this.board.size.y; j++) {
-        if (this.board.grid[i][j]) {
-          this.context.strokeStyle = 'blue';
-          this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-
-          this.context.strokeStyle = 'red';
-          const c = 0;
-          if (!getBoardValueOrFalse(new Vector(i - 1, j)))
-            this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, c, TILE_SIZE);
-
-          if (!getBoardValueOrFalse(new Vector(i + 1, j)))
-            this.context.strokeRect((i + 1) * TILE_SIZE, j * TILE_SIZE, c, TILE_SIZE);
-
-          if (!getBoardValueOrFalse(new Vector(i, j - 1)))
-            this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, c);
-
-          if (!getBoardValueOrFalse(new Vector(i, j + 1)))
-            this.context.strokeRect(i * TILE_SIZE, (j + 1) * TILE_SIZE, TILE_SIZE, c);
-        } else {
-          this.context.strokeStyle = "gray";
-          this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-        }
-      }
-    }
-
-    //Draw player
-    this.context.fillStyle = 'purple';
-    this.context.fillRect(this.player.x * TILE_SIZE, this.player.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-
-    //Draw finish
-    this.context.fillStyle = 'white';
-    this.context.fillRect(this.finish.x * TILE_SIZE, this.finish.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-
-    // Shortest path
-    for (const p of this.board.shortest_path) {
-      this.context.fillStyle = 'grey';
-      this.context.fillRect(p.x * TILE_SIZE, p.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-    }
+  public handleFindShortestPath() {
+    return this.board.getShortestPath(this.player, this.finish);
   }
 
-  public handleFindShortestPath() {
-    this.board.getShortestPath(this.player, this.finish);
+  public resize() {
+    const rect = this.context.canvas.parentElement!.getBoundingClientRect();
+    const pixelRatio = window.devicePixelRatio;
+
+    const screen = new Vector(rect.width, rect.height);
+    this.context.canvas.style.width = `${screen.x}px`;
+    this.context.canvas.style.height = `${screen.y}px`;
+
+    const canvas_size = screen.mul(pixelRatio);
+
+    this.context.canvas.width = canvas_size.x;
+    this.context.canvas.height = canvas_size.y;
+
+    this.context.scale(pixelRatio, pixelRatio);
   }
 
   public handlePointerDown(p: Vector) {
     let i_tile = Math.floor(p.x / TILE_SIZE);
     let j_tile = Math.floor(p.y / TILE_SIZE);
-
     let tile = new Vector(i_tile, j_tile);
 
     if (this.first_selection != null) {
       var grid: boolean[][] = [];
-      grid = structuredClone(this.board.grid);
+      grid = structuredClone(this.board.grid); // Deep array clone
 
-      this.board.addBarrierRect(this.first_selection, tile);
+      this.board.modifyBarrierRect(this.first_selection, tile, (_) => true); // Set cells to true in the rectangle
 
       this.first_selection = null;
 
@@ -99,20 +65,67 @@ export class DisplayDriver {
       this.first_selection = tile;
   }
 
-  public resize() {
-    const rect = this.context.canvas.parentElement!.getBoundingClientRect();
-    const pixelRatio = window.devicePixelRatio;
+  public drawBoard() {
+    // Clear screen
+    this.context.fillStyle = 'green';
+    this.context.fillRect(0, 0, this.context.canvas.width, this.context.canvas.height);
 
-    const screen = new Vector(rect.width, rect.height);
-    this.context.canvas.style.width = `${screen.x}px`;
-    this.context.canvas.style.height = `${screen.y}px`;
+    this.context.lineWidth = 2;
 
-    const canvas_size = screen.mul(pixelRatio);
+    // Draw grid
+    this.context.strokeStyle = 'gray';
+    this.board.applyOnBoard(([i, j]) => {
+      this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    });
 
+    // Draw barriers
+    this.board.applyOnBoard(([i, j]) => {
+      if (this.board.grid[i][j]) {
+        this.context.strokeStyle = 'blue';
+        this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
-    this.context.canvas.width = canvas_size.x;
-    this.context.canvas.height = canvas_size.y;
+        this.context.strokeStyle = 'red';
+        this.board.getNeighbors(new Vector(i, j))
+          .filter(([v, _]) => !this.board.getBoardValueOrDefault(false, v))
+          .forEach(([v, dir]) => {
+            switch (dir) {
+              case Direction.North:
+                this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, 0);
+                break;
+              case Direction.South:
+                this.context.strokeRect(i * TILE_SIZE, v.y * TILE_SIZE, TILE_SIZE, 0);
+                break;
+              case Direction.East:
+                this.context.strokeRect(v.x * TILE_SIZE, j * TILE_SIZE, 0, TILE_SIZE);
+                break;
+              case Direction.West:
+                this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, 0, TILE_SIZE);
+                break;
+            }
+          });
+      }
+    });
 
-    this.context.scale(pixelRatio, pixelRatio);
+    // Draw player
+    this.context.fillStyle = 'purple';
+    this.context.fillRect(this.player.x * TILE_SIZE, this.player.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+    // Draw finish
+    this.context.fillStyle = 'white';
+    this.context.fillRect(this.finish.x * TILE_SIZE, this.finish.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+    // Draw shortest path
+    this.context.fillStyle = 'pink';
+    const path_offset = TILE_SIZE / 3;
+    this.board.shortest_path
+      .filter((v) => !v.equals(this.player) && !v.equals(this.finish))
+      .forEach((v) => {
+        this.context.fillRect(
+          v.x * TILE_SIZE + path_offset,
+          v.y * TILE_SIZE + path_offset,
+          TILE_SIZE - (2 * path_offset),
+          TILE_SIZE - (2 * path_offset)
+        );
+      });
   }
 }
