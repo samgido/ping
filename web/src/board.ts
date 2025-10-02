@@ -9,14 +9,41 @@ export enum Direction {
   West
 }
 
+type CreateRect = {
+  type: 'create_rect',
+  p1: Vector,
+  p2: Vector
+}
+
+type CreateCircle = {
+  type: 'create_circle',
+  c: Vector,
+  radius: number
+}
+
+type Modifications = 
+  | CreateRect
+  | CreateCircle;
+
 export class Board {
   size: Vector;
   grid: boolean[][] = [];
   shortest_path: Vector[] = [];
 
+  modifications: Modifications[] = [];
+
   constructor(size: Vector) {
     this.size = size;
     this.grid = initializeBoardGrid(size, false);
+
+    for (const mod of this.modifications) {
+      switch (mod.type) {
+        case 'create_rect':
+          break;
+        case 'create_circle':
+          break;
+      }
+    }
   }
 
   // Get the value of a cell, if out of bounds a default value
