@@ -30,6 +30,12 @@ class Game {
         case "f":
           this.display_driver.handleFindShortestPath();
           break;
+        case "z":
+          this.display_driver.handleUndo();
+          break;
+        case "y":
+          this.display_driver.handleRedo();
+          break;
       }
     });
   }

@@ -13,8 +13,8 @@ export class MinHeap<T, K> {
     this.getKey = getKey;
   }
 
-  public size(): number { 
-    return this.heap.length; 
+  public size(): number {
+    return this.heap.length;
   }
 
   public logHeap() {
@@ -152,5 +152,32 @@ export class MinHeap<T, K> {
 
       i += 1;
     }
+  }
+}
+
+export class Queue<T> {
+  private queue: T[] = [];
+
+  public push(v: T) {
+    this.queue.push(v);
+  }
+
+  public isEmpty() {
+    return this.queue.length == 0;
+  }
+
+  public pop(): T | undefined {
+    if (this.queue.length == 0)
+      return undefined;
+
+    const v = this.queue[0];
+
+    this.queue = this.queue.slice(1, this.queue.length);
+
+    return v;
+  }
+
+  public clear() {
+    this.queue = [];
   }
 }

@@ -26,6 +26,19 @@ export class DisplayDriver {
     return this.board.getShortestPath(this.player, this.finish);
   }
 
+  public handleUndo() {
+    this.board.popModification();
+    this.board.rebuildBoard();
+
+    this.refreshShortestPath();
+  }
+
+  public handleRedo() {
+    this.board.redoLastModification();
+
+    this.refreshShortestPath();
+  }
+
   public resize() {
     const rect = this.context.canvas.parentElement!.getBoundingClientRect();
     const pixelRatio = window.devicePixelRatio;
@@ -53,14 +66,20 @@ export class DisplayDriver {
 
       this.board.modifyBarrierRect(this.first_selection, tile, (_) => true); // Set cells to true in the rectangle
 
-      this.first_selection = null;
+      const found_path = this.refreshShortestPath();
 
-      const shortest_path = this.board.getShortestPath(this.player, this.finish);
+      if (found_path) {
+        this.board.submitModification({
+          type: "create_rect",
+          p1: tile,
+          p2: this.first_selection
+        });
 
-      if (shortest_path.length == 0) {
-        this.board.grid = grid;
+        this.board.clearRedos();
       } else
-        this.board.shortest_path = shortest_path;
+        this.board.grid = grid;
+
+      this.first_selection = null;
     } else
       this.first_selection = tile;
   }
@@ -127,5 +146,11 @@ export class DisplayDriver {
           TILE_SIZE - (2 * path_offset)
         );
       });
+  }
+
+  private refreshShortestPath(): boolean {
+    this.board.shortest_path = this.board.getShortestPath(this.player, this.finish);
+
+    return this.board.shortest_path.length > 0;
   }
 }

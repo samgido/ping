@@ -1,5 +1,5 @@
 import { Vector } from "./vector";
-import { MinHeap } from "./data_structures";
+import { MinHeap, Queue } from "./data_structures";
 import { orderedPairs } from "./util";
 
 export enum Direction {
@@ -21,7 +21,7 @@ type CreateCircle = {
   radius: number
 }
 
-type Modifications = 
+type Modification =
   | CreateRect
   | CreateCircle;
 
@@ -30,19 +30,60 @@ export class Board {
   grid: boolean[][] = [];
   shortest_path: Vector[] = [];
 
-  modifications: Modifications[] = [];
+  modifications: Modification[] = [];
+  redo_modifications: Queue<Modification> = new Queue();
 
   constructor(size: Vector) {
     this.size = size;
     this.grid = initializeBoardGrid(size, false);
+  }
 
-    for (const mod of this.modifications) {
-      switch (mod.type) {
-        case 'create_rect':
-          break;
-        case 'create_circle':
-          break;
-      }
+  public popModification(): boolean {
+    if (this.modifications.length == 0)
+      return false;
+
+    const mod = this.modifications.pop();
+    if (mod != undefined)
+      this.redo_modifications.push(mod);
+
+    return true;
+  }
+
+  public redoLastModification() {
+    const mod = this.redo_modifications.pop();
+
+    if (mod != undefined) {
+      this.applyModification(mod);
+      this.submitModification(mod);
+    }
+
+    this.rebuildBoard();
+  }
+
+  public clearRedos() {
+    this.redo_modifications.clear();
+  }
+
+  public submitModification(modification: Modification) {
+    this.modifications.push(modification);
+  }
+
+  public rebuildBoard() {
+    this.grid = initializeBoardGrid(this.size, false);
+
+    this.modifications.forEach((mod) => {
+      this.applyModification(mod);
+    });
+  }
+
+  private applyModification(modification: Modification) {
+    switch (modification.type) {
+      case "create_rect":
+        this.modifyBarrierRect(modification.p1, modification.p2, (_) => true);
+        break;
+      case "create_circle":
+        console.log("Restoring circles not implemented yet");
+        break;
     }
   }
 
