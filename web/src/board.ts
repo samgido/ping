@@ -29,7 +29,6 @@ export class Board {
   size: Vector;
   grid: boolean[][] = [];
   shortest_path: Vector[] = [];
-
   modifications: Modification[] = [];
   redo_modifications: Queue<Modification> = new Queue();
 
@@ -39,14 +38,12 @@ export class Board {
   }
 
   public popModification(): boolean {
-    if (this.modifications.length == 0)
-      return false;
-
     const mod = this.modifications.pop();
+
     if (mod != undefined)
       this.redo_modifications.push(mod);
 
-    return true;
+    return mod != undefined;
   }
 
   public redoLastModification() {
@@ -54,17 +51,16 @@ export class Board {
 
     if (mod != undefined) {
       this.applyModification(mod);
-      this.submitModification(mod);
+      this.pushModification(mod);
+      this.rebuildBoard();
     }
-
-    this.rebuildBoard();
   }
 
   public clearRedos() {
     this.redo_modifications.clear();
   }
 
-  public submitModification(modification: Modification) {
+  public pushModification(modification: Modification) {
     this.modifications.push(modification);
   }
 
@@ -121,6 +117,11 @@ export class Board {
 
       this.grid[k][l] = f(this.grid[k][l]);
     }
+  }
+
+  public refreshShortestPath(player: Vector, finish: Vector): boolean {
+    this.shortest_path = this.getShortestPath(player, finish);
+    return this.shortest_path.length > 0;
   }
 
   public getShortestPath(player: Vector, finish: Vector): Vector[] {
@@ -230,6 +231,7 @@ export class Board {
       new Vector(x2, y2)
     ];
   }
+
 }
 
 function initializeBoardGrid(size: Vector, v: boolean): boolean[][] {

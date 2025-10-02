@@ -1,5 +1,4 @@
 import { Board, Direction } from "./board";
-import { orderedPairs } from "./util";
 import { Vector } from "./vector";
 
 const TILE_SIZE = 25; // Pixels
@@ -20,10 +19,8 @@ export class DisplayDriver {
 
     this.player = new Vector(5, 15);
     this.finish = new Vector(10, 15);
-  }
 
-  public handleFindShortestPath() {
-    return this.board.getShortestPath(this.player, this.finish);
+    this.refreshShortestPath();
   }
 
   public handleUndo() {
@@ -35,7 +32,6 @@ export class DisplayDriver {
 
   public handleRedo() {
     this.board.redoLastModification();
-
     this.refreshShortestPath();
   }
 
@@ -69,7 +65,7 @@ export class DisplayDriver {
       const found_path = this.refreshShortestPath();
 
       if (found_path) {
-        this.board.submitModification({
+        this.board.pushModification({
           type: "create_rect",
           p1: tile,
           p2: this.first_selection
@@ -148,9 +144,7 @@ export class DisplayDriver {
       });
   }
 
-  private refreshShortestPath(): boolean {
-    this.board.shortest_path = this.board.getShortestPath(this.player, this.finish);
-
-    return this.board.shortest_path.length > 0;
+  private refreshShortestPath() {
+    return this.board.refreshShortestPath(this.player, this.finish);
   }
 }
