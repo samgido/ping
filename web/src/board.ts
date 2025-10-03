@@ -31,7 +31,7 @@ export class Board {
   shortest_path: Vector[] = [];
 
   modifications: Modification[] = [];
-  undone_modifications: Modification[] = [];
+  undone_modifications: Modification[] = []; // 'redo' stack
 
   constructor(size: Vector) {
     this.size = size;
@@ -50,11 +50,12 @@ export class Board {
   public redoModification() {
     const mod = this.undone_modifications.pop();
 
-    if (mod != undefined) {
-      this.applyModification(mod);
-      this.pushModification(mod);
-      this.rebuildBoard();
-    }
+    if (mod == undefined)
+      return;
+
+    this.applyModification(mod);
+    this.pushModification(mod);
+    this.rebuildBoard();
   }
 
   public clearUndoneModifications() {

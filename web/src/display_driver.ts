@@ -60,15 +60,15 @@ export class DisplayDriver {
       this.board.modifyBarrierRect(this.first_selection, tile, (_) => true); // Set cells to true in the rectangle
       this.board.pushModification({
         type: "create_rect",
-        p1: tile,
-        p2: this.first_selection
+        p1: this.first_selection,
+        p2: tile
       });
 
       const found_path = this.refreshShortestPath();
       if (found_path) {
-        this.board.clearUndoneModifications();
+        this.board.clearUndoneModifications(); // A new barrier was made, so the redo stack should be cleared
       } else
-        this.handleUndo(); // Reuse works for now
+        this.handleUndo(); // Undo the modification, reusing handler works for now
 
       this.first_selection = null;
     }
