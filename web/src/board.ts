@@ -1,5 +1,5 @@
 import { Vector } from "./vector";
-import { MinHeap, Queue } from "./data_structures";
+import { MinHeap } from "./data_structures";
 import { orderedPairs } from "./util";
 
 export enum Direction {
@@ -30,7 +30,7 @@ export class Board {
   grid: boolean[][] = [];
   shortest_path: Vector[] = [];
   modifications: Modification[] = [];
-  redo_modifications: Queue<Modification> = new Queue();
+  redo_modifications: Modification[] = [];
 
   constructor(size: Vector) {
     this.size = size;
@@ -57,7 +57,7 @@ export class Board {
   }
 
   public clearRedos() {
-    this.redo_modifications.clear();
+    this.redo_modifications = [];
   }
 
   public pushModification(modification: Modification) {
