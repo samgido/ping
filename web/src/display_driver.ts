@@ -1,5 +1,4 @@
-import { Board, Direction } from "./board";
-import { orderedPairs } from "./util";
+import { Board, RectModification, Direction } from "./board";
 import { Vector } from "./vector";
 
 const TILE_SIZE = 25; // Pixels
@@ -20,10 +19,20 @@ export class DisplayDriver {
 
     this.player = new Vector(5, 15);
     this.finish = new Vector(10, 15);
+
+    this.refreshShortestPath();
   }
 
-  public handleFindShortestPath() {
-    return this.board.getShortestPath(this.player, this.finish);
+  public handleUndo() {
+    this.board.popModification();
+    this.board.rebuildBoard();
+
+    this.refreshShortestPath();
+  }
+
+  public handleRedo() {
+    this.board.redoModification();
+    this.refreshShortestPath();
   }
 
   public resize() {
@@ -43,26 +52,30 @@ export class DisplayDriver {
   }
 
   public handlePointerDown(p: Vector) {
-    let i_tile = Math.floor(p.x / TILE_SIZE);
-    let j_tile = Math.floor(p.y / TILE_SIZE);
-    let tile = new Vector(i_tile, j_tile);
+    let tile = new Vector(Math.floor(p.x / TILE_SIZE), Math.floor(p.y / TILE_SIZE));
 
-    if (this.first_selection != null) {
-      var grid: boolean[][] = [];
-      grid = structuredClone(this.board.grid); // Deep array clone
-
-      this.board.modifyBarrierRect(this.first_selection, tile, (_) => true); // Set cells to true in the rectangle
-
-      this.first_selection = null;
-
-      const shortest_path = this.board.getShortestPath(this.player, this.finish);
-
-      if (shortest_path.length == 0) {
-        this.board.grid = grid;
-      } else
-        this.board.shortest_path = shortest_path;
-    } else
+    if (this.first_selection == null) {
       this.first_selection = tile;
+      return;
+    }
+
+    const mod: RectModification = {
+      type: 'rect',
+      modify: (_) => true,
+      p1: this.first_selection,
+      p2: tile,
+    };
+
+    this.board.applyModification(mod);
+    this.board.pushModification(mod);
+
+    const is_new_maze_correct = this.refreshShortestPath();
+    if (is_new_maze_correct) {
+      this.board.clearUndoneModifications(); // The new barrier is accepted, so the redo stack should be cleared
+    } else
+      this.handleUndo(); // Undo the modification, reusing handler works for now
+
+    this.first_selection = null;
   }
 
   public drawBoard() {
@@ -80,30 +93,31 @@ export class DisplayDriver {
 
     // Draw barriers
     this.board.applyOnBoard(([i, j]) => {
-      if (this.board.grid[i][j]) {
-        this.context.strokeStyle = 'blue';
-        this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+      if (!this.board.grid[i][j])
+        return;
 
-        this.context.strokeStyle = 'red';
-        this.board.getNeighbors(new Vector(i, j))
-          .filter(([v, _]) => !this.board.getBoardValueOrDefault(false, v))
-          .forEach(([v, dir]) => {
-            switch (dir) {
-              case Direction.North:
-                this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, 0);
-                break;
-              case Direction.South:
-                this.context.strokeRect(i * TILE_SIZE, v.y * TILE_SIZE, TILE_SIZE, 0);
-                break;
-              case Direction.East:
-                this.context.strokeRect(v.x * TILE_SIZE, j * TILE_SIZE, 0, TILE_SIZE);
-                break;
-              case Direction.West:
-                this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, 0, TILE_SIZE);
-                break;
-            }
-          });
-      }
+      this.context.strokeStyle = 'blue';
+      this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+      this.context.strokeStyle = 'red';
+      this.board.getNeighbors(new Vector(i, j))
+        .filter(([v, _]) => !this.board.getBoardValueOrDefault(false, v))
+        .forEach(([v, dir]) => {
+          switch (dir) {
+            case Direction.North:
+              this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, 0);
+              break;
+            case Direction.South:
+              this.context.strokeRect(i * TILE_SIZE, v.y * TILE_SIZE, TILE_SIZE, 0);
+              break;
+            case Direction.East:
+              this.context.strokeRect(v.x * TILE_SIZE, j * TILE_SIZE, 0, TILE_SIZE);
+              break;
+            case Direction.West:
+              this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, 0, TILE_SIZE);
+              break;
+          }
+        });
     });
 
     // Draw player
@@ -127,5 +141,9 @@ export class DisplayDriver {
           TILE_SIZE - (2 * path_offset)
         );
       });
+  }
+
+  private refreshShortestPath() {
+    return this.board.refreshShortestPath(this.player, this.finish);
   }
 }

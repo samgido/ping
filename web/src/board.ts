@@ -9,14 +9,82 @@ export enum Direction {
   West
 }
 
+export type RectModification = {
+  type: 'rect',
+  modify: (v: boolean) => boolean,
+  p1: Vector,
+  p2: Vector
+}
+
+export type CircleModification = {
+  type: 'circle',
+  modify: (v: boolean) => boolean,
+  c: Vector,
+  radius: number
+}
+
+type Modification =
+  | RectModification
+  | CircleModification;
+
 export class Board {
   size: Vector;
   grid: boolean[][] = [];
   shortest_path: Vector[] = [];
 
+  modifications: Modification[] = [];
+  undone_modifications: Modification[] = []; // 'redo' stack
+
   constructor(size: Vector) {
     this.size = size;
     this.grid = initializeBoardGrid(size, false);
+  }
+
+  public popModification(): boolean {
+    const mod = this.modifications.pop();
+
+    if (mod != undefined)
+      this.undone_modifications.push(mod);
+
+    return mod != undefined;
+  }
+
+  public redoModification() {
+    const mod = this.undone_modifications.pop();
+
+    if (mod == undefined)
+      return;
+
+    this.applyModification(mod);
+    this.pushModification(mod);
+    this.rebuildBoard();
+  }
+
+  public clearUndoneModifications() {
+    this.undone_modifications = [];
+  }
+
+  public pushModification(modification: Modification) {
+    this.modifications.push(modification);
+  }
+
+  public rebuildBoard() {
+    this.grid = initializeBoardGrid(this.size, false);
+
+    this.modifications.forEach((mod) => {
+      this.applyModification(mod);
+    });
+  }
+
+  public applyModification(mod: Modification) {
+    switch (mod.type) {
+      case 'rect':
+        this.modifyBarrierRect(mod.p1, mod.p2, mod.modify);
+        break;
+      case 'circle':
+        console.log("Restoring circles not implemented yet");
+        break;
+    }
   }
 
   // Get the value of a cell, if out of bounds a default value
@@ -39,7 +107,7 @@ export class Board {
   ];
 
   // Operate on each cell in a rectangle
-  public modifyBarrierRect(p1: Vector, p2: Vector, f: (v: boolean) => boolean) {
+  private modifyBarrierRect(p1: Vector, p2: Vector, f: (v: boolean) => boolean) {
     let [v1, v2] = this.orderVectors(p1, p2);
 
     const area = v2.subtractVector(v1)
@@ -53,6 +121,11 @@ export class Board {
 
       this.grid[k][l] = f(this.grid[k][l]);
     }
+  }
+
+  public refreshShortestPath(player: Vector, finish: Vector): boolean {
+    this.shortest_path = this.getShortestPath(player, finish);
+    return this.shortest_path.length > 0;
   }
 
   public getShortestPath(player: Vector, finish: Vector): Vector[] {
@@ -162,6 +235,7 @@ export class Board {
       new Vector(x2, y2)
     ];
   }
+
 }
 
 function initializeBoardGrid(size: Vector, v: boolean): boolean[][] {

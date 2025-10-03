@@ -27,8 +27,11 @@ class Game {
 
     document.addEventListener("keydown", (event) => {
       switch (event.key) {
-        case "f":
-          this.display_driver.handleFindShortestPath();
+        case "z":
+          this.display_driver.handleUndo();
+          break;
+        case "y":
+          this.display_driver.handleRedo();
           break;
       }
     });
