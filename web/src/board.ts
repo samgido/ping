@@ -9,21 +9,23 @@ export enum Direction {
   West
 }
 
-type CreateRectModification = {
-  type: 'create_rect',
+export type RectModification = {
+  type: 'rect',
+  modify: (v: boolean) => boolean,
   p1: Vector,
   p2: Vector
 }
 
-type CreateCircleModification = {
-  type: 'create_circle',
+export type CircleModification = {
+  type: 'circle',
+  modify: (v: boolean) => boolean,
   c: Vector,
   radius: number
 }
 
 type Modification =
-  | CreateRectModification
-  | CreateCircleModification;
+  | RectModification
+  | CircleModification;
 
 export class Board {
   size: Vector;
@@ -74,12 +76,12 @@ export class Board {
     });
   }
 
-  private applyModification(modification: Modification) {
-    switch (modification.type) {
-      case "create_rect":
-        this.modifyBarrierRect(modification.p1, modification.p2, (_) => true);
+  public applyModification(mod: Modification) {
+    switch (mod.type) {
+      case 'rect':
+        this.modifyBarrierRect(mod.p1, mod.p2, mod.modify);
         break;
-      case "create_circle":
+      case 'circle':
         console.log("Restoring circles not implemented yet");
         break;
     }
@@ -105,7 +107,7 @@ export class Board {
   ];
 
   // Operate on each cell in a rectangle
-  public modifyBarrierRect(p1: Vector, p2: Vector, f: (v: boolean) => boolean) {
+  private modifyBarrierRect(p1: Vector, p2: Vector, f: (v: boolean) => boolean) {
     let [v1, v2] = this.orderVectors(p1, p2);
 
     const area = v2.subtractVector(v1)
