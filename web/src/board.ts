@@ -9,28 +9,29 @@ export enum Direction {
   West
 }
 
-type CreateRect = {
+type CreateRectModification = {
   type: 'create_rect',
   p1: Vector,
   p2: Vector
 }
 
-type CreateCircle = {
+type CreateCircleModification = {
   type: 'create_circle',
   c: Vector,
   radius: number
 }
 
 type Modification =
-  | CreateRect
-  | CreateCircle;
+  | CreateRectModification
+  | CreateCircleModification;
 
 export class Board {
   size: Vector;
   grid: boolean[][] = [];
   shortest_path: Vector[] = [];
+
   modifications: Modification[] = [];
-  redo_modifications: Modification[] = [];
+  undone_modifications: Modification[] = [];
 
   constructor(size: Vector) {
     this.size = size;
@@ -41,13 +42,13 @@ export class Board {
     const mod = this.modifications.pop();
 
     if (mod != undefined)
-      this.redo_modifications.push(mod);
+      this.undone_modifications.push(mod);
 
     return mod != undefined;
   }
 
-  public redoLastModification() {
-    const mod = this.redo_modifications.pop();
+  public redoModification() {
+    const mod = this.undone_modifications.pop();
 
     if (mod != undefined) {
       this.applyModification(mod);
@@ -56,8 +57,8 @@ export class Board {
     }
   }
 
-  public clearRedos() {
-    this.redo_modifications = [];
+  public clearUndoneModifications() {
+    this.undone_modifications = [];
   }
 
   public pushModification(modification: Modification) {

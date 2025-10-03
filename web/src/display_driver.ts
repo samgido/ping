@@ -31,7 +31,7 @@ export class DisplayDriver {
   }
 
   public handleRedo() {
-    this.board.redoLastModification();
+    this.board.redoModification();
     this.refreshShortestPath();
   }
 
@@ -52,32 +52,26 @@ export class DisplayDriver {
   }
 
   public handlePointerDown(p: Vector) {
-    let i_tile = Math.floor(p.x / TILE_SIZE);
-    let j_tile = Math.floor(p.y / TILE_SIZE);
-    let tile = new Vector(i_tile, j_tile);
+    let tile = new Vector(Math.floor(p.x / TILE_SIZE), Math.floor(p.y / TILE_SIZE));
 
-    if (this.first_selection != null) {
-      var grid: boolean[][] = [];
-      grid = structuredClone(this.board.grid); // Deep array clone
-
+    if (this.first_selection == null) {
+      this.first_selection = tile;
+    } else {
       this.board.modifyBarrierRect(this.first_selection, tile, (_) => true); // Set cells to true in the rectangle
+      this.board.pushModification({
+        type: "create_rect",
+        p1: tile,
+        p2: this.first_selection
+      });
 
       const found_path = this.refreshShortestPath();
-
       if (found_path) {
-        this.board.pushModification({
-          type: "create_rect",
-          p1: tile,
-          p2: this.first_selection
-        });
-
-        this.board.clearRedos();
+        this.board.clearUndoneModifications();
       } else
-        this.board.grid = grid;
+        this.handleUndo(); // Reuse works for now
 
       this.first_selection = null;
-    } else
-      this.first_selection = tile;
+    }
   }
 
   public drawBoard() {
