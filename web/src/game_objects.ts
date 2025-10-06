@@ -1,6 +1,6 @@
 import { Vector } from "./vector";
 import { MinHeap } from "./data_structures";
-import { orderedPairs } from "./util";
+import { orderedPairs, orderVectors } from "./util";
 
 export enum Direction {
   North = 'w',
@@ -55,8 +55,8 @@ export class GameState {
     this.finish = new Vector(15, 10);
   }
 
-  public movePlayer(direction: Direction) {
-    const new_pos = this.player.addVector(directionToVectorMap(direction));
+  public movePlayer(movement: Vector) {
+    const new_pos = this.player.addVector(movement);
     const valid = !this.getBoardValueOrDefault(true, new_pos);
 
     if (valid)
@@ -144,7 +144,7 @@ export class GameState {
 
   // Operate on each cell in a rectangle
   private modifyBarrierRect(p1: Vector, p2: Vector, f: (v: boolean) => boolean) {
-    let [v1, v2] = this.orderVectors(p1, p2);
+    let [v1, v2] = orderVectors(p1, p2);
 
     const area = v2.subtractVector(v1)
       .addScalar(1); // Add scalar for inclusivity
@@ -257,21 +257,6 @@ export class GameState {
   private validY(n: number) {
     return n >= 0 && n < this.size.y;
   }
-
-  // Order vector components s.t. v1.x < v2.x and v1.y < v2.y
-  private orderVectors(p1: Vector, p2: Vector): [Vector, Vector] {
-    let x1 = Math.min(p1.x, p2.x);
-    let y1 = Math.min(p1.y, p2.y);
-
-    let x2 = Math.max(p1.x, p2.x);
-    let y2 = Math.max(p1.y, p2.y);
-
-    return [
-      new Vector(x1, y1),
-      new Vector(x2, y2)
-    ];
-  }
-
 }
 
 function initializeBoardGrid(size: Vector, v: boolean): boolean[][] {

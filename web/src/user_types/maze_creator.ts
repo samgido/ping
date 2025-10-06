@@ -1,19 +1,40 @@
 import { TILE_SIZE } from "../display_driver";
-import { Direction, GameState, RectModification } from "../game_objects";
+import { Direction, directionToVectorMap, GameState, RectModification } from "../game_objects";
 import { UserType } from "../user";
+import { canvasPointerToWorldSpace, mouseEventToOffsetVector, orderedPairs, orderedPairsOverArea, orderVectors } from "../util";
 import { Vector } from "../vector";
 
 export class MazeCreatorUser implements UserType {
   game_state: GameState
-
   first_selection: Vector | null = null;
+  selection_hover: Vector | null = null;
+
+  camera_offset: Vector = new Vector(0, 0);
+  camera_scale = 1;
 
   constructor(game_state: GameState) {
     this.game_state = game_state;
+
+    this.game_state.refreshShortestPath();
   }
 
   public handleKeyDown(event: KeyboardEvent): void {
     switch (event.key) {
+      case "ArrowUp":
+        this.camera_scale = Math.max(0.1, this.camera_scale * 1.1);
+        break;
+      case "ArrowDown":
+        this.camera_scale = Math.max(0.1, this.camera_scale * 0.9);
+        break;
+      case 'w':
+      case 's':
+      case 'a':
+      case 'd':
+        const movement = directionToVectorMap(event.key as Direction).mul(TILE_SIZE);
+        const camera_offset_x = this.camera_offset.x + movement.x;
+        const camera_offset_y = this.camera_offset.y + movement.y;
+        this.camera_offset = new Vector(camera_offset_x, camera_offset_y);
+        break;
       case "z":
         this.game_state.undoModification();
         break;
@@ -24,7 +45,8 @@ export class MazeCreatorUser implements UserType {
   }
 
   public handlePointerDown(event: PointerEvent): void {
-    let tile = new Vector(Math.floor(event.offsetX / TILE_SIZE), Math.floor(event.offsetY / TILE_SIZE));
+    const pointer = canvasPointerToWorldSpace(mouseEventToOffsetVector(event), this.camera_scale, this.camera_offset);
+    const tile = new Vector(Math.floor(pointer.x / TILE_SIZE), Math.floor(pointer.y / TILE_SIZE));
 
     if (this.first_selection == null) {
       this.first_selection = tile;
@@ -50,10 +72,21 @@ export class MazeCreatorUser implements UserType {
     this.first_selection = null;
   }
 
-  public draw(context: CanvasRenderingContext2D) {
+  handlePointerMove(event: PointerEvent): void {
+    const pointer = canvasPointerToWorldSpace(mouseEventToOffsetVector(event), this.camera_scale, this.camera_offset);
+    const tile = new Vector(Math.floor(pointer.x / TILE_SIZE), Math.floor(pointer.y / TILE_SIZE));
+    this.selection_hover = tile;
+  }
+
+  public drawGame(context: CanvasRenderingContext2D) {
+    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+    context.save();
+    context.scale(this.camera_scale, this.camera_scale);
+    context.translate(-1 * this.camera_offset.x, -1 * this.camera_offset.y);
     // Clear screen
     context.fillStyle = 'green';
     context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+
 
     context.lineWidth = 2;
 
@@ -113,5 +146,13 @@ export class MazeCreatorUser implements UserType {
           TILE_SIZE - (2 * path_offset)
         );
       });
+
+    if (this.first_selection != null && this.selection_hover != null) {
+      context.fillStyle = '#ff00003b';
+      for (const [i, j] of orderedPairsOverArea(this.first_selection, this.selection_hover))
+        context.fillRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    }
+
+    context.restore();
   }
 }

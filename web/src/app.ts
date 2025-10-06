@@ -17,7 +17,7 @@ class Game {
     this.game_state = new GameState(new Vector(100, 100));
 
     this.user = new MazeCreatorUser(this.game_state);
-    this.display_driver = new DisplayDriver(this.context, this.game_state);
+    this.display_driver = new DisplayDriver(this.context);
 
     this.initEventListeners(canvas);
 
@@ -36,6 +36,10 @@ class Game {
       this.user.handlePointerDown(event);
     });
 
+    canvas.addEventListener("pointermove", (event) => {
+      this.user.handlePointerMove(event);
+    });
+
     document.addEventListener("keydown", (event) => {
       switch (event.key) {
         case '1':
@@ -51,8 +55,7 @@ class Game {
   }
 
   private draw(_: number) {
-    // this.display_driver.drawBoard();
-    this.user.draw(this.context);
+    this.user.drawGame(this.context);
 
     requestAnimationFrame((new_time) => {
       this.draw(new_time);
