@@ -1,18 +1,23 @@
 import { GameState } from "./game_objects";
 import { DisplayDriver } from "./display_driver";
-import { MazeCreator as MazeCreatorUser, UserType } from "./user";
 import { Vector } from "./vector";
+import { UserType } from "./user";
+import { MazeCreatorUser } from "./user_types/maze_creator";
+import { MazePlayerUser } from "./user_types/maze_player";
 
 class Game {
   display_driver: DisplayDriver
   user: UserType
+  game_state: GameState
+  context: CanvasRenderingContext2D
 
   constructor(context: CanvasRenderingContext2D) {
-    const canvas = context.canvas;
-    const game_state = new GameState(new Vector(100, 100));
+    this.context = context;
+    const canvas = this.context.canvas;
+    this.game_state = new GameState(new Vector(100, 100));
 
-    this.user = new MazeCreatorUser(game_state);
-    this.display_driver = new DisplayDriver(context, game_state);
+    this.user = new MazeCreatorUser(this.game_state);
+    this.display_driver = new DisplayDriver(this.context, this.game_state);
 
     this.initEventListeners(canvas);
 
@@ -32,12 +37,22 @@ class Game {
     });
 
     document.addEventListener("keydown", (event) => {
-      this.user.handleKeyDown(event);
+      switch (event.key) {
+        case '1':
+          this.user = new MazeCreatorUser(this.game_state);
+          break;
+        case '2':
+          this.user = new MazePlayerUser(this.game_state);
+          break;
+        default:
+          this.user.handleKeyDown(event);
+      }
     });
   }
 
   private draw(_: number) {
-    this.display_driver.drawBoard();
+    // this.display_driver.drawBoard();
+    this.user.draw(this.context);
 
     requestAnimationFrame((new_time) => {
       this.draw(new_time);

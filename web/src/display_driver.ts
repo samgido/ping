@@ -7,8 +7,6 @@ export class DisplayDriver {
   context: CanvasRenderingContext2D
   game_state: GameState
 
-  first_selection: Vector | null = null;
-
   constructor(context: CanvasRenderingContext2D, game_state: GameState) {
     this.context = context;
     this.game_state = game_state;

@@ -3,10 +3,19 @@ import { MinHeap } from "./data_structures";
 import { orderedPairs } from "./util";
 
 export enum Direction {
-  North,
-  South,
-  East,
-  West
+  North = 'w',
+  South = 's',
+  East = 'd',
+  West = 'a'
+}
+
+export function directionToVectorMap(dir: Direction) {
+  switch (dir) {
+    case Direction.North: return new Vector(0, -1);
+    case Direction.South: return new Vector(0, 1);
+    case Direction.East: return new Vector(1, 0);
+    case Direction.West: return new Vector(-1, 0);
+  }
 }
 
 export type RectModification = {
@@ -46,13 +55,24 @@ export class GameState {
     this.finish = new Vector(15, 10);
   }
 
+  public movePlayer(direction: Direction) {
+    const new_pos = this.player.addVector(directionToVectorMap(direction));
+    const valid = !this.getBoardValueOrDefault(true, new_pos);
+
+    if (valid)
+      this.player = new_pos;
+
+    return valid;
+  }
+
   private popModification(): boolean {
     const mod = this.modifications.pop();
+    const valid = mod != undefined;
 
-    if (mod != undefined)
+    if (valid)
       this.undone_modifications.push(mod);
 
-    return mod != undefined;
+    return valid;
   }
 
   public redoModification() {
