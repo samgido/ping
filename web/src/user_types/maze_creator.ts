@@ -1,20 +1,19 @@
 import { TILE_SIZE } from "../display_driver";
 import { Direction, directionToVectorMap, GameState, RectModification } from "../game_objects";
 import { UserType } from "../user";
-import { canvasPointerToWorldSpace, mouseEventToOffsetVector, orderedPairs, orderedPairsOverArea, orderVectors } from "../util";
+import { canvasPointerToWorldSpace, orderedPairsOverArea } from "../util";
 import { Vector } from "../vector";
 
 export class MazeCreatorUser implements UserType {
   game_state: GameState
-  first_selection: Vector | null = null;
-  selection_hover: Vector | null = null;
-
   camera_offset: Vector = new Vector(0, 0);
   camera_scale = 1;
 
+  first_selection: Vector | null = null;
+  selection_hover: Vector | null = null;
+
   constructor(game_state: GameState) {
     this.game_state = game_state;
-
     this.game_state.refreshShortestPath();
   }
 
@@ -45,7 +44,7 @@ export class MazeCreatorUser implements UserType {
   }
 
   public handlePointerDown(event: PointerEvent): void {
-    const pointer = canvasPointerToWorldSpace(mouseEventToOffsetVector(event), this.camera_scale, this.camera_offset);
+    const pointer = canvasPointerToWorldSpace(Vector.fromMouseEvent(event), this.camera_scale, this.camera_offset);
     const tile = new Vector(Math.floor(pointer.x / TILE_SIZE), Math.floor(pointer.y / TILE_SIZE));
 
     if (this.first_selection == null) {
@@ -73,7 +72,7 @@ export class MazeCreatorUser implements UserType {
   }
 
   handlePointerMove(event: PointerEvent): void {
-    const pointer = canvasPointerToWorldSpace(mouseEventToOffsetVector(event), this.camera_scale, this.camera_offset);
+    const pointer = canvasPointerToWorldSpace(Vector.fromMouseEvent(event), this.camera_scale, this.camera_offset);
     const tile = new Vector(Math.floor(pointer.x / TILE_SIZE), Math.floor(pointer.y / TILE_SIZE));
     this.selection_hover = tile;
   }

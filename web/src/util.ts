@@ -14,10 +14,6 @@ export function* orderedPairsOverArea(p1: Vector, p2: Vector): Generator<[number
       yield [i + v1.x, j + v1.y];
 }
 
-export function mouseEventToOffsetVector(event: MouseEvent) {
-  return new Vector(event.offsetX, event.offsetY);
-}
-
 // Order vector components s.t. v1.x <= v2.x and v1.y <= v2.y
 export function orderVectors(p1: Vector, p2: Vector): [Vector, Vector] {
   let x1 = Math.min(p1.x, p2.x);
