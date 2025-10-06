@@ -1,12 +1,21 @@
 import { Vector } from "./vector";
 import { MinHeap } from "./data_structures";
-import { orderedPairs } from "./util";
+import { orderedPairs, orderVectors } from "./util";
 
 export enum Direction {
-  North,
-  South,
-  East,
-  West
+  North = 'w',
+  South = 's',
+  East = 'd',
+  West = 'a'
+}
+
+export function directionToVectorMap(dir: Direction) {
+  switch (dir) {
+    case Direction.North: return new Vector(0, -1);
+    case Direction.South: return new Vector(0, 1);
+    case Direction.East: return new Vector(1, 0);
+    case Direction.West: return new Vector(-1, 0);
+  }
 }
 
 export type RectModification = {
@@ -27,7 +36,7 @@ type Modification =
   | RectModification
   | CircleModification;
 
-export class Board {
+export class GameState {
   size: Vector;
   grid: boolean[][] = [];
   shortest_path: Vector[] = [];
@@ -35,29 +44,56 @@ export class Board {
   modifications: Modification[] = [];
   undone_modifications: Modification[] = []; // 'redo' stack
 
+  player: Vector;
+  finish: Vector;
+
   constructor(size: Vector) {
     this.size = size;
     this.grid = initializeBoardGrid(size, false);
+
+    this.player = new Vector(5, 10);
+    this.finish = new Vector(15, 10);
   }
 
-  public popModification(): boolean {
-    const mod = this.modifications.pop();
+  public movePlayer(movement: Vector) {
+    const new_pos = this.player.addVector(movement);
+    const valid = !this.getBoardValueOrDefault(true, new_pos);
 
-    if (mod != undefined)
+    if (valid)
+      this.player = new_pos;
+
+    return valid;
+  }
+
+  private popModification(): boolean {
+    const mod = this.modifications.pop();
+    const valid = mod != undefined;
+
+    if (valid)
       this.undone_modifications.push(mod);
 
-    return mod != undefined;
+    return valid;
   }
 
   public redoModification() {
     const mod = this.undone_modifications.pop();
 
     if (mod == undefined)
-      return;
+      return false;
 
     this.applyModification(mod);
     this.pushModification(mod);
     this.rebuildBoard();
+    this.refreshShortestPath();
+
+    return true;
+  }
+
+  public undoModification() {
+    if (this.popModification()) {
+      this.rebuildBoard();
+      this.refreshShortestPath();
+    }
   }
 
   public clearUndoneModifications() {
@@ -108,7 +144,7 @@ export class Board {
 
   // Operate on each cell in a rectangle
   private modifyBarrierRect(p1: Vector, p2: Vector, f: (v: boolean) => boolean) {
-    let [v1, v2] = this.orderVectors(p1, p2);
+    let [v1, v2] = orderVectors(p1, p2);
 
     const area = v2.subtractVector(v1)
       .addScalar(1); // Add scalar for inclusivity
@@ -123,8 +159,8 @@ export class Board {
     }
   }
 
-  public refreshShortestPath(player: Vector, finish: Vector): boolean {
-    this.shortest_path = this.getShortestPath(player, finish);
+  public refreshShortestPath(): boolean {
+    this.shortest_path = this.getShortestPath(this.player, this.finish);
     return this.shortest_path.length > 0;
   }
 
@@ -221,21 +257,6 @@ export class Board {
   private validY(n: number) {
     return n >= 0 && n < this.size.y;
   }
-
-  // Order vector components s.t. v1.x < v2.x and v1.y < v2.y
-  private orderVectors(p1: Vector, p2: Vector): [Vector, Vector] {
-    let x1 = Math.min(p1.x, p2.x);
-    let y1 = Math.min(p1.y, p2.y);
-
-    let x2 = Math.max(p1.x, p2.x);
-    let y2 = Math.max(p1.y, p2.y);
-
-    return [
-      new Vector(x1, y1),
-      new Vector(x2, y2)
-    ];
-  }
-
 }
 
 function initializeBoardGrid(size: Vector, v: boolean): boolean[][] {

@@ -1,12 +1,23 @@
+import { GameState } from "./game_objects";
 import { DisplayDriver } from "./display_driver";
 import { Vector } from "./vector";
+import { UserType } from "./user_types/user_types";
+import { MazeCreatorUser } from "./user_types/maze_creator";
+import { MazePlayerUser } from "./user_types/maze_player";
 
 class Game {
   display_driver: DisplayDriver
+  user: UserType
+  game_state: GameState
+  context: CanvasRenderingContext2D
 
   constructor(context: CanvasRenderingContext2D) {
-    const canvas = context.canvas;
-    this.display_driver = new DisplayDriver(context);
+    this.context = context;
+    const canvas = this.context.canvas;
+    this.game_state = new GameState(new Vector(100, 100));
+
+    this.user = new MazeCreatorUser(this.game_state);
+    this.display_driver = new DisplayDriver(this.context);
 
     this.initEventListeners(canvas);
 
@@ -22,27 +33,33 @@ class Game {
 
   private initEventListeners(canvas: HTMLCanvasElement) {
     canvas.addEventListener("pointerdown", (event) => {
-      this.display_driver.handlePointerDown(new Vector(event.offsetX, event.offsetY));
+      this.user.handlePointerDown(event);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      this.user.handlePointerMove(event);
     });
 
     document.addEventListener("keydown", (event) => {
       switch (event.key) {
-        case "z":
-          this.display_driver.handleUndo();
+        case '1':
+          this.user = new MazeCreatorUser(this.game_state);
           break;
-        case "y":
-          this.display_driver.handleRedo();
+        case '2':
+          this.user = new MazePlayerUser(this.game_state);
           break;
+        default:
+          this.user.handleKeyDown(event);
       }
     });
   }
 
   private draw(_: number) {
-    this.display_driver.drawBoard();
+    this.user.drawGameScaled(this.context);
 
     requestAnimationFrame((new_time) => {
       this.draw(new_time);
-    })
+    });
   }
 
   private resize() {

@@ -7,6 +7,10 @@ export class Vector {
     this.y = y;
   }
 
+  static fromMouseEvent(event: MouseEvent) {
+    return new Vector(event.offsetX, event.offsetY);
+  }
+
   public addScalar(n: number) {
     return new Vector(this.x + n, this.y + n);
   }
