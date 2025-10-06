@@ -10,6 +10,7 @@ export class MazePlayerUser extends UserType {
 
   constructor(game_state: GameState) {
     super();
+
     this.game_state = game_state;
   }
 

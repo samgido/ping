@@ -20,6 +20,8 @@ export abstract class UserType {
   }
 
   drawGameScaled(context: CanvasRenderingContext2D) {
+    // Just some boiler plate to apply the camera transform before drawing game objects
+    // Game objects are drawn in world space
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
     context.save();
     context.scale(this.camera_scale, this.camera_scale);
