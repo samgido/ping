@@ -17,16 +17,19 @@ export class MazePlayerUser implements UserType {
     var movement = new Vector(0, 0);
     switch (event.key) {
       case 'w':
-        movement.addVector(directionToVectorMap(Direction.North));
+        movement = movement.addVector(directionToVectorMap(Direction.North));
+        break;
       case 'a':
-        movement.addVector(directionToVectorMap(Direction.West));
+        movement = movement.addVector(directionToVectorMap(Direction.West));
+        break;
       case 's':
-        movement.addVector(directionToVectorMap(Direction.South));
+        movement = movement.addVector(directionToVectorMap(Direction.South));
+        break;
       case 'd':
-        movement.addVector(directionToVectorMap(Direction.East));
-        this.game_state.movePlayer(movement);
+        movement = movement.addVector(directionToVectorMap(Direction.East));
         break;
     }
+    this.game_state.movePlayer(movement);
   }
 
   handlePointerDown(event: PointerEvent): void { }
