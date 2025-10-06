@@ -1,7 +1,7 @@
 import { GameState } from "./game_objects";
 import { DisplayDriver } from "./display_driver";
 import { Vector } from "./vector";
-import { UserType } from "./user";
+import { UserType } from "./user_types/user_types";
 import { MazeCreatorUser } from "./user_types/maze_creator";
 import { MazePlayerUser } from "./user_types/maze_player";
 
@@ -55,7 +55,7 @@ class Game {
   }
 
   private draw(_: number) {
-    this.user.drawGame(this.context);
+    this.user.drawGameScaled(this.context);
 
     requestAnimationFrame((new_time) => {
       this.draw(new_time);

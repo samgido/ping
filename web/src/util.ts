@@ -1,3 +1,4 @@
+import { TILE_SIZE } from "./display_driver";
 import { Vector } from "./vector";
 
 export function* orderedPairs(size: Vector): Generator<[number, number]> {
@@ -28,6 +29,6 @@ export function orderVectors(p1: Vector, p2: Vector): [Vector, Vector] {
   ];
 }
 
-export function canvasPointerToWorldSpace(pointer: Vector, camera_scale: number, camera_offset: Vector) {
-  return new Vector(pointer.x, pointer.y).mul(1 / camera_scale).addVector(camera_offset);
+export function pointerToTile(p: Vector) {
+  return new Vector(Math.floor(p.x / TILE_SIZE), Math.floor(p.y / TILE_SIZE));
 }

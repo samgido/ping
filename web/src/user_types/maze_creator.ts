@@ -1,23 +1,27 @@
 import { TILE_SIZE } from "../display_driver";
 import { Direction, directionToVectorMap, GameState, RectModification } from "../game_objects";
-import { UserType } from "../user";
-import { canvasPointerToWorldSpace, orderedPairsOverArea } from "../util";
+import { UserType } from "./user_types";
+import { orderedPairsOverArea, pointerToTile } from "../util";
 import { Vector } from "../vector";
 
-export class MazeCreatorUser implements UserType {
+export class MazeCreatorUser extends UserType {
   game_state: GameState
   camera_offset: Vector = new Vector(0, 0);
   camera_scale = 1;
 
   first_selection: Vector | null = null;
-  selection_hover: Vector | null = null;
+  selection_hover: Vector = new Vector(0, 0);
 
   constructor(game_state: GameState) {
+    super(); // kill me
+
     this.game_state = game_state;
     this.game_state.refreshShortestPath();
   }
 
   public handleKeyDown(event: KeyboardEvent): void {
+    var movement = new Vector(0, 0);
+
     switch (event.key) {
       case "ArrowUp":
         this.camera_scale = Math.max(0.1, this.camera_scale * 1.1);
@@ -26,13 +30,16 @@ export class MazeCreatorUser implements UserType {
         this.camera_scale = Math.max(0.1, this.camera_scale * 0.9);
         break;
       case 'w':
-      case 's':
+        movement = movement.addVector(directionToVectorMap(Direction.North));
+        break;
       case 'a':
+        movement = movement.addVector(directionToVectorMap(Direction.West));
+        break;
+      case 's':
+        movement = movement.addVector(directionToVectorMap(Direction.South));
+        break;
       case 'd':
-        const movement = directionToVectorMap(event.key as Direction).mul(TILE_SIZE);
-        const camera_offset_x = this.camera_offset.x + movement.x;
-        const camera_offset_y = this.camera_offset.y + movement.y;
-        this.camera_offset = new Vector(camera_offset_x, camera_offset_y);
+        movement = movement.addVector(directionToVectorMap(Direction.East));
         break;
       case "z":
         this.game_state.undoModification();
@@ -41,11 +48,13 @@ export class MazeCreatorUser implements UserType {
         this.game_state.redoModification();
         break;
     }
+
+    this.camera_offset = this.camera_offset.addVector(movement.mul(TILE_SIZE));
   }
 
   public handlePointerDown(event: PointerEvent): void {
-    const pointer = canvasPointerToWorldSpace(Vector.fromMouseEvent(event), this.camera_scale, this.camera_offset);
-    const tile = new Vector(Math.floor(pointer.x / TILE_SIZE), Math.floor(pointer.y / TILE_SIZE));
+    const pointer = this.canvasPointToWorldSpace(Vector.fromMouseEvent(event));
+    const tile = pointerToTile(pointer);
 
     if (this.first_selection == null) {
       this.first_selection = tile;
@@ -72,20 +81,15 @@ export class MazeCreatorUser implements UserType {
   }
 
   handlePointerMove(event: PointerEvent): void {
-    const pointer = canvasPointerToWorldSpace(Vector.fromMouseEvent(event), this.camera_scale, this.camera_offset);
-    const tile = new Vector(Math.floor(pointer.x / TILE_SIZE), Math.floor(pointer.y / TILE_SIZE));
+    const pointer = this.canvasPointToWorldSpace(Vector.fromMouseEvent(event));
+    const tile = pointerToTile(pointer);
     this.selection_hover = tile;
   }
 
   public drawGame(context: CanvasRenderingContext2D) {
-    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    context.save();
-    context.scale(this.camera_scale, this.camera_scale);
-    context.translate(-1 * this.camera_offset.x, -1 * this.camera_offset.y);
     // Clear screen
     context.fillStyle = 'green';
     context.fillRect(0, 0, context.canvas.width, context.canvas.height);
-
 
     context.lineWidth = 2;
 
@@ -151,7 +155,5 @@ export class MazeCreatorUser implements UserType {
       for (const [i, j] of orderedPairsOverArea(this.first_selection, this.selection_hover))
         context.fillRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     }
-
-    context.restore();
   }
 }

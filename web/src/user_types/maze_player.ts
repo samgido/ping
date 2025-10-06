@@ -1,15 +1,15 @@
 import { TILE_SIZE } from "../display_driver";
 import { Direction, directionToVectorMap, GameState } from "../game_objects";
-import { UserType } from "../user";
+import { UserType } from "./user_types";
 import { Vector } from "../vector";
 
-export class MazePlayerUser implements UserType {
+export class MazePlayerUser extends UserType {
   game_state: GameState
-
   camera_offset: Vector = new Vector(0, 0);
   camera_scale: number = 1;
 
   constructor(game_state: GameState) {
+    super();
     this.game_state = game_state;
   }
 
@@ -37,11 +37,6 @@ export class MazePlayerUser implements UserType {
   handlePointerMove(event: PointerEvent): void { }
 
   drawGame(context: CanvasRenderingContext2D): void {
-    context.clearRect(0, 0, context.canvas.width, context.canvas.height);
-    context.save();
-    context.scale(this.camera_scale, this.camera_scale);
-    context.translate(-1 * this.camera_offset.x, -1 * this.camera_offset.y);
-
     // Draw player
     context.fillStyle = 'purple';
     context.fillRect(this.game_state.player.x * TILE_SIZE, this.game_state.player.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
@@ -49,7 +44,5 @@ export class MazePlayerUser implements UserType {
     // Draw finish
     context.fillStyle = 'white';
     context.fillRect(this.game_state.finish.x * TILE_SIZE, this.game_state.finish.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-
-    context.restore();
   }
 }

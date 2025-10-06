@@ -41,8 +41,5 @@
       "ts",
       "js"
     ]
-  },
-  "dependencies": {
-    "mathjs": "^14.8.2"
   }
 }
