@@ -27,7 +27,7 @@ type Modification =
   | RectModification
   | CircleModification;
 
-export class Board {
+export class GameState {
   size: Vector;
   grid: boolean[][] = [];
   shortest_path: Vector[] = [];
@@ -35,12 +35,18 @@ export class Board {
   modifications: Modification[] = [];
   undone_modifications: Modification[] = []; // 'redo' stack
 
+  player: Vector;
+  finish: Vector;
+
   constructor(size: Vector) {
     this.size = size;
     this.grid = initializeBoardGrid(size, false);
+
+    this.player = new Vector(5, 10);
+    this.finish = new Vector(15, 10);
   }
 
-  public popModification(): boolean {
+  private popModification(): boolean {
     const mod = this.modifications.pop();
 
     if (mod != undefined)
@@ -53,11 +59,21 @@ export class Board {
     const mod = this.undone_modifications.pop();
 
     if (mod == undefined)
-      return;
+      return false;
 
     this.applyModification(mod);
     this.pushModification(mod);
     this.rebuildBoard();
+    this.refreshShortestPath();
+
+    return true;
+  }
+
+  public undoModification() {
+    if (this.popModification()) {
+      this.rebuildBoard();
+      this.refreshShortestPath();
+    }
   }
 
   public clearUndoneModifications() {
@@ -123,8 +139,8 @@ export class Board {
     }
   }
 
-  public refreshShortestPath(player: Vector, finish: Vector): boolean {
-    this.shortest_path = this.getShortestPath(player, finish);
+  public refreshShortestPath(): boolean {
+    this.shortest_path = this.getShortestPath(this.player, this.finish);
     return this.shortest_path.length > 0;
   }
 

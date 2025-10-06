@@ -1,38 +1,19 @@
-import { Board, RectModification, Direction } from "./board";
+import { GameState, Direction } from "./game_objects";
 import { Vector } from "./vector";
 
-const TILE_SIZE = 25; // Pixels
+export const TILE_SIZE = 25; // Pixels
 
 export class DisplayDriver {
   context: CanvasRenderingContext2D
-  camera_offset: Vector = new Vector(0, 0);
-  board: Board
-
-  player: Vector;
-  finish: Vector;
+  game_state: GameState
 
   first_selection: Vector | null = null;
 
-  constructor(context: CanvasRenderingContext2D) {
-    this.board = new Board(new Vector(100, 100));
+  constructor(context: CanvasRenderingContext2D, game_state: GameState) {
     this.context = context;
+    this.game_state = game_state;
 
-    this.player = new Vector(5, 15);
-    this.finish = new Vector(10, 15);
-
-    this.refreshShortestPath();
-  }
-
-  public handleUndo() {
-    this.board.popModification();
-    this.board.rebuildBoard();
-
-    this.refreshShortestPath();
-  }
-
-  public handleRedo() {
-    this.board.redoModification();
-    this.refreshShortestPath();
+    this.game_state.refreshShortestPath();
   }
 
   public resize() {
@@ -51,33 +32,6 @@ export class DisplayDriver {
     this.context.scale(pixelRatio, pixelRatio);
   }
 
-  public handlePointerDown(p: Vector) {
-    let tile = new Vector(Math.floor(p.x / TILE_SIZE), Math.floor(p.y / TILE_SIZE));
-
-    if (this.first_selection == null) {
-      this.first_selection = tile;
-      return;
-    }
-
-    const mod: RectModification = {
-      type: 'rect',
-      modify: (_) => true,
-      p1: this.first_selection,
-      p2: tile,
-    };
-
-    this.board.applyModification(mod);
-    this.board.pushModification(mod);
-
-    const is_new_maze_correct = this.refreshShortestPath();
-    if (is_new_maze_correct) {
-      this.board.clearUndoneModifications(); // The new barrier is accepted, so the redo stack should be cleared
-    } else
-      this.handleUndo(); // Undo the modification, reusing handler works for now
-
-    this.first_selection = null;
-  }
-
   public drawBoard() {
     // Clear screen
     this.context.fillStyle = 'green';
@@ -87,21 +41,21 @@ export class DisplayDriver {
 
     // Draw grid
     this.context.strokeStyle = 'gray';
-    this.board.applyOnBoard(([i, j]) => {
+    this.game_state.applyOnBoard(([i, j]) => {
       this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     });
 
     // Draw barriers
-    this.board.applyOnBoard(([i, j]) => {
-      if (!this.board.grid[i][j])
+    this.game_state.applyOnBoard(([i, j]) => {
+      if (!this.game_state.grid[i][j])
         return;
 
       this.context.strokeStyle = 'blue';
       this.context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
       this.context.strokeStyle = 'red';
-      this.board.getNeighbors(new Vector(i, j))
-        .filter(([v, _]) => !this.board.getBoardValueOrDefault(false, v))
+      this.game_state.getNeighbors(new Vector(i, j))
+        .filter(([v, _]) => !this.game_state.getBoardValueOrDefault(false, v))
         .forEach(([v, dir]) => {
           switch (dir) {
             case Direction.North:
@@ -122,17 +76,17 @@ export class DisplayDriver {
 
     // Draw player
     this.context.fillStyle = 'purple';
-    this.context.fillRect(this.player.x * TILE_SIZE, this.player.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    this.context.fillRect(this.game_state.player.x * TILE_SIZE, this.game_state.player.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
     // Draw finish
     this.context.fillStyle = 'white';
-    this.context.fillRect(this.finish.x * TILE_SIZE, this.finish.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    this.context.fillRect(this.game_state.finish.x * TILE_SIZE, this.game_state.finish.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
 
     // Draw shortest path
     this.context.fillStyle = 'pink';
     const path_offset = TILE_SIZE / 3;
-    this.board.shortest_path
-      .filter((v) => !v.equals(this.player) && !v.equals(this.finish))
+    this.game_state.shortest_path
+      .filter((v) => !v.equals(this.game_state.player) && !v.equals(this.game_state.finish))
       .forEach((v) => {
         this.context.fillRect(
           v.x * TILE_SIZE + path_offset,
@@ -141,9 +95,5 @@ export class DisplayDriver {
           TILE_SIZE - (2 * path_offset)
         );
       });
-  }
-
-  private refreshShortestPath() {
-    return this.board.refreshShortestPath(this.player, this.finish);
   }
 }

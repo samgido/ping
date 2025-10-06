@@ -1,12 +1,18 @@
+import { GameState } from "./game_objects";
 import { DisplayDriver } from "./display_driver";
+import { MazeCreator as MazeCreatorUser, UserType } from "./user";
 import { Vector } from "./vector";
 
 class Game {
   display_driver: DisplayDriver
+  user: UserType
 
   constructor(context: CanvasRenderingContext2D) {
     const canvas = context.canvas;
-    this.display_driver = new DisplayDriver(context);
+    const game_state = new GameState(new Vector(100, 100));
+
+    this.user = new MazeCreatorUser(game_state);
+    this.display_driver = new DisplayDriver(context, game_state);
 
     this.initEventListeners(canvas);
 
@@ -22,18 +28,11 @@ class Game {
 
   private initEventListeners(canvas: HTMLCanvasElement) {
     canvas.addEventListener("pointerdown", (event) => {
-      this.display_driver.handlePointerDown(new Vector(event.offsetX, event.offsetY));
+      this.user.handlePointerDown(event);
     });
 
     document.addEventListener("keydown", (event) => {
-      switch (event.key) {
-        case "z":
-          this.display_driver.handleUndo();
-          break;
-        case "y":
-          this.display_driver.handleRedo();
-          break;
-      }
+      this.user.handleKeyDown(event);
     });
   }
 
@@ -42,7 +41,7 @@ class Game {
 
     requestAnimationFrame((new_time) => {
       this.draw(new_time);
-    })
+    });
   }
 
   private resize() {
