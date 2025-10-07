@@ -29,6 +29,6 @@ export function orderVectors(p1: Vector, p2: Vector): [Vector, Vector] {
   ];
 }
 
-export function pointerToTile(p: Vector) {
+export function pointToTile(p: Vector) {
   return new Vector(Math.floor(p.x / TILE_SIZE), Math.floor(p.y / TILE_SIZE));
 }
