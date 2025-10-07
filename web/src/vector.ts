@@ -11,6 +11,18 @@ export class Vector {
     return new Vector(event.offsetX, event.offsetY);
   }
 
+  public normalize() {
+    const l = Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
+    if (l == 0)
+      return new Vector(0, 0);
+
+    return new Vector(this.x, this.y).mul(1 / l);
+  }
+
+  public apply(f: (x: number) => number) {
+    return new Vector(f(this.x), f(this.y));
+  }
+
   public addScalar(n: number) {
     return new Vector(this.x + n, this.y + n);
   }

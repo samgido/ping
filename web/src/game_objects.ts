@@ -1,6 +1,8 @@
 import { Vector } from "./vector";
 import { MinHeap } from "./data_structures";
-import { orderedPairs, orderVectors } from "./util";
+import { orderedPairs, orderVectors, pointToTile } from "./util";
+import { TILE_SIZE } from "./display_driver";
+import { PLAYER_SIZE } from "./user_types/maze_player";
 
 export enum Direction {
   North = 'w',
@@ -55,14 +57,18 @@ export class GameState {
     this.finish = new Vector(15, 10);
   }
 
-  public movePlayer(movement: Vector) {
-    const new_pos = this.player.addVector(movement);
-    const valid = !this.getBoardValueOrDefault(true, new_pos);
+  public isPlayerPositionValid(p: Vector) {
+    return !this.getTilesPlayerPositionIsTouching(p)
+      .some((v) => this.getBoardValueOrDefault(true, v));
+  }
 
-    if (valid)
-      this.player = new_pos;
-
-    return valid;
+  public getTilesPlayerPositionIsTouching(p: Vector) {
+    return [
+      p,
+      new Vector(p.x + PLAYER_SIZE, p.y),
+      new Vector(p.x, p.y + PLAYER_SIZE),
+      new Vector(p.x + PLAYER_SIZE, p.y + PLAYER_SIZE),
+    ].map((v) => pointToTile(v));
   }
 
   private popModification(): boolean {
@@ -189,8 +195,9 @@ export class GameState {
     const closed_list: Map<string, Node> = new Map();
 
     // Run A*
+    const player_tile = pointToTile(new Vector(this.player.x + Math.floor(PLAYER_SIZE / 2), this.player.y + Math.floor(PLAYER_SIZE / 2)));
     open_list.insert({
-      p: player,
+      p: player_tile,
       f: 0,
       parent: null,
     });
@@ -256,6 +263,72 @@ export class GameState {
 
   private validY(n: number) {
     return n >= 0 && n < this.size.y;
+  }
+
+  public getDrawer(context: CanvasRenderingContext2D) {
+    return {
+      draw_grid: () => {
+        context.strokeStyle = 'gray';
+        this.applyOnBoard(([i, j]) => {
+          context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        });
+      },
+
+      draw_barriers: () => {
+        this.applyOnBoard(([i, j]) => {
+          if (!this.grid[i][j])
+            return;
+
+          context.strokeStyle = 'blue';
+          context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+          context.strokeStyle = 'red';
+          this.getNeighbors(new Vector(i, j))
+            .filter(([v, _]) => !this.getBoardValueOrDefault(false, v))
+            .forEach(([v, dir]) => {
+              switch (dir) {
+                case Direction.North:
+                  context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, 0);
+                  break;
+                case Direction.South:
+                  context.strokeRect(i * TILE_SIZE, v.y * TILE_SIZE, TILE_SIZE, 0);
+                  break;
+                case Direction.East:
+                  context.strokeRect(v.x * TILE_SIZE, j * TILE_SIZE, 0, TILE_SIZE);
+                  break;
+                case Direction.West:
+                  context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, 0, TILE_SIZE);
+                  break;
+              }
+            });
+        });
+      },
+
+      draw_player: () => {
+        context.fillStyle = 'purple';
+        context.fillRect(this.player.x, this.player.y, PLAYER_SIZE, PLAYER_SIZE);
+      },
+
+      draw_finish: () => {
+        context.fillStyle = 'white';
+        context.fillRect(this.finish.x * TILE_SIZE, this.finish.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+      },
+
+      draw_shortest_path: () => {
+        context.fillStyle = 'pink';
+        const path_offset = TILE_SIZE / 3;
+        this.shortest_path
+          .filter((v) => !v.equals(this.player) && !v.equals(this.finish))
+          .forEach((v) => {
+            context.fillRect(
+              v.x * TILE_SIZE + path_offset,
+              v.y * TILE_SIZE + path_offset,
+              TILE_SIZE - (2 * path_offset),
+              TILE_SIZE - (2 * path_offset)
+            );
+          });
+      }
+    }
   }
 }
 
