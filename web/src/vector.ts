@@ -54,4 +54,8 @@ export class Vector {
   public toKey() {
     return this.x + "," + this.y;
   }
+
+  public copy() {
+    return new Vector(this.x, this.y);
+  }
 }

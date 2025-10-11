@@ -65,6 +65,7 @@ class Game {
     this.last_frame_time = t;
 
     this.user.tick(delta_time);
+    this.game_state.tick(delta_time);
 
     this.user.updateGame(this.context);
 

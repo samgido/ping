@@ -1,9 +1,10 @@
 import { TILE_SIZE } from "../display_driver";
-import { GameState } from "../game_objects";
+import { createPing, GameState, PING_PARTICLE_SPAWN_COUNT } from "../game_objects";
 import { UserType } from "./user_types";
 import { Vector } from "../vector";
+import { getRandomInt } from "../util";
 
-const PLAYER_SPEED = 175; // Pixels / second
+const PLAYER_SPEED = 175; // Units / second
 export const PLAYER_SIZE = Math.floor(TILE_SIZE * 0.8);
 
 export class MazePlayerUser extends UserType {
@@ -12,8 +13,7 @@ export class MazePlayerUser extends UserType {
   camera_scale: number = 1;
 
   player_velocity: Vector = new Vector(0, 0);
-
-  keys: Map<string, boolean> = new Map();
+  keys_down: Map<string, boolean> = new Map();
 
   constructor(game_state: GameState) {
     super();
@@ -27,7 +27,10 @@ export class MazePlayerUser extends UserType {
       case 's':
       case 'a':
       case 'd':
-        this.keys.set(event.key, true);
+        this.keys_down.set(event.key, true);
+        break;
+      case " ":
+        this.game_state.pings.set(getRandomInt(), createPing(this.game_state.player));
         break;
     }
   }
@@ -38,7 +41,7 @@ export class MazePlayerUser extends UserType {
       case 's':
       case 'a':
       case 'd':
-        this.keys.set(event.key, false);
+        this.keys_down.set(event.key, false);
         break;
     }
   }
@@ -47,13 +50,13 @@ export class MazePlayerUser extends UserType {
     var vx = 0;
     var vy = 0;
 
-    if (this.keys.get('w'))
+    if (this.keys_down.get('w'))
       vy = -1;
-    if (this.keys.get('s'))
+    if (this.keys_down.get('s'))
       vy = 1;
-    if (this.keys.get('a'))
+    if (this.keys_down.get('a'))
       vx = -1;
-    if (this.keys.get('d'))
+    if (this.keys_down.get('d'))
       vx = 1;
 
     const apply_movement_if_valid = (move: Vector) => {
@@ -78,6 +81,8 @@ export class MazePlayerUser extends UserType {
     drawer.draw_player();
     drawer.draw_finish();
 
-    drawer.draw_barriers();
+    // drawer.draw_barriers();
+
+    drawer.draw_ping_particles_connected();
   }
 }

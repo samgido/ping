@@ -20,6 +20,36 @@ export function directionToVectorMap(dir: Direction) {
   }
 }
 
+export const PING_PARTICLE_SPEED = 255; // units / second
+export const PING_PARTICLE_SPAWN_COUNT = 100;
+export const PING_PARTICLE_MAX_AGE = 2; // seconds
+
+type PingParticle = {
+  position: Vector
+  direction: number
+}
+
+type Ping = {
+  particles: PingParticle[]
+  age: number
+}
+
+export function createPing(origin: Vector): Ping {
+  var particles: PingParticle[] = [];
+  const angle_increment = (2 * Math.PI) / PING_PARTICLE_SPAWN_COUNT;
+  for (var i = 0; i < PING_PARTICLE_SPAWN_COUNT; i++) {
+    particles.push({
+      position: origin.copy(),
+      direction: angle_increment * i
+    });
+  }
+
+  return {
+    particles: particles,
+    age: 0
+  }
+}
+
 export type RectModification = {
   type: 'rect',
   modify: (v: boolean) => boolean,
@@ -48,6 +78,8 @@ export class GameState {
 
   player: Vector;
   finish: Vector;
+
+  pings: Map<number, Ping> = new Map();
 
   constructor(size: Vector) {
     this.size = size;
@@ -265,6 +297,31 @@ export class GameState {
     return n >= 0 && n < this.size.y;
   }
 
+  public tick(delta_time: number) {
+    for (const k of this.pings.keys()) {
+      var ping = this.pings.get(k)!;
+
+      if (ping.age >= PING_PARTICLE_MAX_AGE) {
+        this.pings.delete(k);
+        continue;
+      }
+
+      ping.age += delta_time;
+
+      ping.particles.forEach((p) => {
+        const dir = p.direction;
+        const new_x = p.position.x + Math.cos(dir) * PING_PARTICLE_SPEED * delta_time;
+        const new_y = p.position.y + Math.sin(dir) * PING_PARTICLE_SPEED * delta_time;
+
+        if (!this.getBoardValueOrDefault(true, pointToTile(new Vector(new_x, p.position.y))))
+          p.position.x = new_x;
+
+        if (!this.getBoardValueOrDefault(true, pointToTile(new Vector(p.position.x, new_y))))
+          p.position.y = new_y;
+      });
+    }
+  }
+
   public getDrawer(context: CanvasRenderingContext2D) {
     return {
       draw_grid: () => {
@@ -327,6 +384,22 @@ export class GameState {
               TILE_SIZE - (2 * path_offset)
             );
           });
+      },
+
+      draw_ping_particles_connected: () => {
+        context.strokeStyle = 'yellow';
+        context.fillStyle = 'yellow';
+        this.pings.forEach((ping) => {
+          context.beginPath();
+          for (var i = 0; i < ping.particles.length + 1; i++) {
+            const j = i % ping.particles.length;
+
+            context.fillRect(ping.particles[j].position.x, ping.particles[j].position.y, 3, 3);
+            context.lineTo(ping.particles[j].position.x, ping.particles[j].position.y);
+            context.stroke();
+          }
+          context.closePath();
+        });
       }
     }
   }
