@@ -21,12 +21,13 @@ export function directionToVectorMap(dir: Direction) {
 }
 
 export const PING_PARTICLE_SPEED = 255; // units / second
-export const PING_PARTICLE_SPAWN_COUNT = 100;
-export const PING_PARTICLE_MAX_AGE = 2; // seconds
+export const PING_PARTICLE_SPAWN_COUNT = 500;
+export const PING_PARTICLE_MAX_AGE = 5; // seconds
 
 type PingParticle = {
   position: Vector
   direction: number
+  frozen: boolean
 }
 
 type Ping = {
@@ -40,7 +41,8 @@ export function createPing(origin: Vector): Ping {
   for (var i = 0; i < PING_PARTICLE_SPAWN_COUNT; i++) {
     particles.push({
       position: origin.copy(),
-      direction: angle_increment * i
+      direction: angle_increment * i,
+      frozen: false
     });
   }
 
@@ -309,15 +311,21 @@ export class GameState {
       ping.age += delta_time;
 
       ping.particles.forEach((p) => {
+        if (p.frozen)
+          return;
+
         const dir = p.direction;
         const new_x = p.position.x + Math.cos(dir) * PING_PARTICLE_SPEED * delta_time;
         const new_y = p.position.y + Math.sin(dir) * PING_PARTICLE_SPEED * delta_time;
 
-        if (!this.getBoardValueOrDefault(true, pointToTile(new Vector(new_x, p.position.y))))
-          p.position.x = new_x;
+        const new_x_valid = !this.getBoardValueOrDefault(true, pointToTile(new Vector(new_x, p.position.y)));
+        const new_y_valid = !this.getBoardValueOrDefault(true, pointToTile(new Vector(p.position.x, new_y)));
 
-        if (!this.getBoardValueOrDefault(true, pointToTile(new Vector(p.position.x, new_y))))
+        if (new_x_valid && new_y_valid) {
+          p.position.x = new_x;
           p.position.y = new_y;
+        } else
+          p.frozen;
       });
     }
   }
@@ -387,18 +395,18 @@ export class GameState {
       },
 
       draw_ping_particles_connected: () => {
-        context.strokeStyle = 'yellow';
-        context.fillStyle = 'yellow';
+        context.strokeStyle = '#fffb00ff';
         this.pings.forEach((ping) => {
           context.beginPath();
           for (var i = 0; i < ping.particles.length + 1; i++) {
             const j = i % ping.particles.length;
 
-            context.fillRect(ping.particles[j].position.x, ping.particles[j].position.y, 3, 3);
-            context.lineTo(ping.particles[j].position.x, ping.particles[j].position.y);
-            context.stroke();
+            const [x1, y1] = ping.particles[j].position.toTuple();
+
+            context.lineTo(x1, y1);
           }
           context.closePath();
+          context.stroke();
         });
       }
     }

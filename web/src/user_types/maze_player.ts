@@ -1,5 +1,5 @@
 import { TILE_SIZE } from "../display_driver";
-import { createPing, GameState, PING_PARTICLE_SPAWN_COUNT } from "../game_objects";
+import { createPing, GameState } from "../game_objects";
 import { UserType } from "./user_types";
 import { Vector } from "../vector";
 import { getRandomInt } from "../util";
