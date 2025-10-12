@@ -11,6 +11,8 @@ class Game {
   game_state: GameState
   context: CanvasRenderingContext2D
 
+  last_frame_time: number = 0;
+
   constructor(context: CanvasRenderingContext2D) {
     this.context = context;
     const canvas = this.context.canvas;
@@ -52,10 +54,20 @@ class Game {
           this.user.handleKeyDown(event);
       }
     });
+
+    document.addEventListener("keyup", (event) => {
+      this.user.handleKeyUp(event);
+    });
   }
 
-  private draw(_: number) {
-    this.user.drawGameScaled(this.context);
+  private draw(t: number) {
+    const delta_time = (t - this.last_frame_time) / 1000;
+    this.last_frame_time = t;
+
+    this.user.tick(delta_time);
+    this.game_state.tick(delta_time);
+
+    this.user.drawGame(this.context);
 
     requestAnimationFrame((new_time) => {
       this.draw(new_time);

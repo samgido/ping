@@ -1,7 +1,7 @@
 import { TILE_SIZE } from "../display_driver";
 import { Direction, directionToVectorMap, GameState, RectModification } from "../game_objects";
 import { UserType } from "./user_types";
-import { orderedPairsOverArea, pointerToTile } from "../util";
+import { orderedPairsOverArea, pointToTile } from "../util";
 import { Vector } from "../vector";
 
 export class MazeCreatorUser extends UserType {
@@ -18,6 +18,8 @@ export class MazeCreatorUser extends UserType {
     this.game_state = game_state;
     this.game_state.refreshShortestPath();
   }
+
+  tick(delta_time: number): void { }
 
   public handleKeyDown(event: KeyboardEvent): void {
     var movement = new Vector(0, 0);
@@ -52,9 +54,11 @@ export class MazeCreatorUser extends UserType {
     this.camera_offset = this.camera_offset.addVector(movement.mul(TILE_SIZE));
   }
 
+  handleKeyUp(event: KeyboardEvent): void { }
+
   public handlePointerDown(event: PointerEvent): void {
     const pointer = this.canvasPointToWorldSpace(Vector.fromMouseEvent(event));
-    const tile = pointerToTile(pointer);
+    const tile = pointToTile(pointer);
 
     if (this.first_selection == null) {
       this.first_selection = tile;
@@ -82,74 +86,25 @@ export class MazeCreatorUser extends UserType {
 
   handlePointerMove(event: PointerEvent): void {
     const pointer = this.canvasPointToWorldSpace(Vector.fromMouseEvent(event));
-    const tile = pointerToTile(pointer);
+    const tile = pointToTile(pointer);
     this.selection_hover = tile;
   }
 
-  public drawGame(context: CanvasRenderingContext2D) {
+  public drawWorld(context: CanvasRenderingContext2D) {
     // Clear screen
     context.fillStyle = 'green';
     context.fillRect(0, 0, context.canvas.width, context.canvas.height);
 
     context.lineWidth = 2;
 
-    // Draw grid
-    context.strokeStyle = 'gray';
-    this.game_state.applyOnBoard(([i, j]) => {
-      context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-    });
+    const drawer = this.game_state.getDrawer(context);
+    drawer.draw_grid();
+    drawer.draw_barriers();
+    drawer.draw_shortest_path();
+    drawer.draw_player();
+    drawer.draw_finish();
 
-    // Draw barriers
-    this.game_state.applyOnBoard(([i, j]) => {
-      if (!this.game_state.grid[i][j])
-        return;
-
-      context.strokeStyle = 'blue';
-      context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-
-      context.strokeStyle = 'red';
-      this.game_state.getNeighbors(new Vector(i, j))
-        .filter(([v, _]) => !this.game_state.getBoardValueOrDefault(false, v))
-        .forEach(([v, dir]) => {
-          switch (dir) {
-            case Direction.North:
-              context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, TILE_SIZE, 0);
-              break;
-            case Direction.South:
-              context.strokeRect(i * TILE_SIZE, v.y * TILE_SIZE, TILE_SIZE, 0);
-              break;
-            case Direction.East:
-              context.strokeRect(v.x * TILE_SIZE, j * TILE_SIZE, 0, TILE_SIZE);
-              break;
-            case Direction.West:
-              context.strokeRect(i * TILE_SIZE, j * TILE_SIZE, 0, TILE_SIZE);
-              break;
-          }
-        });
-    });
-
-    // Draw player
-    context.fillStyle = 'purple';
-    context.fillRect(this.game_state.player.x * TILE_SIZE, this.game_state.player.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-
-    // Draw finish
-    context.fillStyle = 'white';
-    context.fillRect(this.game_state.finish.x * TILE_SIZE, this.game_state.finish.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-
-    // Draw shortest path
-    context.fillStyle = 'pink';
-    const path_offset = TILE_SIZE / 3;
-    this.game_state.shortest_path
-      .filter((v) => !v.equals(this.game_state.player) && !v.equals(this.game_state.finish))
-      .forEach((v) => {
-        context.fillRect(
-          v.x * TILE_SIZE + path_offset,
-          v.y * TILE_SIZE + path_offset,
-          TILE_SIZE - (2 * path_offset),
-          TILE_SIZE - (2 * path_offset)
-        );
-      });
-
+    // Draw selection draft
     if (this.first_selection != null && this.selection_hover != null) {
       context.fillStyle = '#ff00003b';
       for (const [i, j] of orderedPairsOverArea(this.first_selection, this.selection_hover))
