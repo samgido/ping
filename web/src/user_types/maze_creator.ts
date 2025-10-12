@@ -90,7 +90,7 @@ export class MazeCreatorUser extends UserType {
     this.selection_hover = tile;
   }
 
-  public updateWorld(context: CanvasRenderingContext2D) {
+  public drawWorld(context: CanvasRenderingContext2D) {
     // Clear screen
     context.fillStyle = 'green';
     context.fillRect(0, 0, context.canvas.width, context.canvas.height);

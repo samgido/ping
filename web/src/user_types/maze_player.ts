@@ -76,7 +76,7 @@ export class MazePlayerUser extends UserType {
 
   handlePointerMove(_: PointerEvent): void { }
 
-  updateWorld(context: CanvasRenderingContext2D): void {
+  drawWorld(context: CanvasRenderingContext2D): void {
     const drawer = this.game_state.getDrawer(context);
     drawer.draw_player();
     drawer.draw_finish();
